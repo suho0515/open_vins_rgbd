@@ -11,9 +11,8 @@ octomap
 it used VINS-RGBD handheld datasets.
 
 # how to run
-'''
 $ roslaunch ov_msckf test_rgbd.launch
-'''
+
 
 
 
