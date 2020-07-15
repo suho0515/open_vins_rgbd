@@ -1,0 +1,8 @@
+prefix=/home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_eval
+
+Name: ov_eval
+Description: Description of ov_eval
+Version: 1.0.0
+Cflags: -I/home/eh420/catkin_ws_ov_rgbd/src/open_vins/ov_eval/src
+Libs: -L/home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_eval/lib -lov_eval_lib
+Requires: roscpp rospy geometry_msgs nav_msgs sensor_msgs

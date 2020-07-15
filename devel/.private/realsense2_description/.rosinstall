@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/eh420/catkin_ws_ov_rgbd/devel/.private/realsense2_description/setup.sh

@@ -1,0 +1,8 @@
+prefix=/home/eh420/catkin_ws_ov_rgbd/devel/.private/realsense2_description
+
+Name: realsense2_description
+Description: Description of realsense2_description
+Version: 2.2.13
+Cflags: 
+Libs: -L/home/eh420/catkin_ws_ov_rgbd/devel/.private/realsense2_description/lib 
+Requires: 

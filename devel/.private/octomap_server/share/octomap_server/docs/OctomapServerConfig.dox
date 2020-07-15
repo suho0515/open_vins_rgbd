@@ -1,0 +1,22 @@
+\subsubsection parameters ROS parameters
+
+Reads and maintains the following parameters on the ROS server
+
+- \b "~compress_map" : \b [bool] Compresses the map losslessly min: False, default: True, max: True
+- \b "~incremental_2D_projection" : \b [bool] Incremental 2D projection min: False, default: False, max: True
+- \b "~filter_speckles" : \b [bool] Filter speckle nodes (with no neighbors) min: False, default: False, max: True
+- \b "~max_depth" : \b [int] Maximum depth when traversing the octree to send out markers. 16: full depth / max. resolution min: 1, default: 16, max: 16
+- \b "~pointcloud_min_z" : \b [double] Minimum height of points to consider for insertion min: -100.0, default: -100.0, max: 100.0
+- \b "~pointcloud_max_z" : \b [double] Maximum height of points to consider for insertion min: -100.0, default: 100.0, max: 100.0
+- \b "~occupancy_min_z" : \b [double] Minimum height of occupied cells to consider in the final map min: -100.0, default: -100.0, max: 100.0
+- \b "~occupancy_max_z" : \b [double] Maximum height of occupied cells to consider in the final map min: -100.0, default: 100.0, max: 100.0
+- \b "~sensor_model_max_range" : \b [double] Sensor maximum range min: -1.0, default: -1.0, max: 100.0
+- \b "~sensor_model_hit" : \b [double] Probabilities for hits in the sensor model when dynamically building a map min: 0.5, default: 0.7, max: 1.0
+- \b "~sensor_model_miss" : \b [double] Probabilities for misses in the sensor model when dynamically building a map min: 0.0, default: 0.4, max: 0.5
+- \b "~sensor_model_min" : \b [double] Minimum probability for clamping when dynamically building a map min: 0.0, default: 0.12, max: 1.0
+- \b "~sensor_model_max" : \b [double] Maximum probability for clamping when dynamically building a map min: 0.0, default: 0.97, max: 1.0
+- \b "~filter_ground" : \b [bool] Filter ground plane min: False, default: False, max: True
+- \b "~ground_filter_distance" : \b [double] Distance threshold to consider a point as ground min: 0.001, default: 0.04, max: 1.0
+- \b "~ground_filter_angle" : \b [double] Angular threshold of the detected plane from the horizontal plane to be detected as ground  min: 0.001, default: 0.15, max: 15.0
+- \b "~ground_filter_plane_distance" : \b [double] Distance threshold from z=0 for a plane to be detected as ground min: 0.001, default: 0.07, max: 1.0
+

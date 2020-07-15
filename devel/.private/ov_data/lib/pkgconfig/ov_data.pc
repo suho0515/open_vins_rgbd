@@ -1,0 +1,8 @@
+prefix=/home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_data
+
+Name: ov_data
+Description: Description of ov_data
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_data/lib 
+Requires: 

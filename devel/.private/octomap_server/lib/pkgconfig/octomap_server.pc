@@ -1,0 +1,8 @@
+prefix=/home/eh420/catkin_ws_ov_rgbd/devel/.private/octomap_server
+
+Name: octomap_server
+Description: Description of octomap_server
+Version: 0.6.5
+Cflags: -I/home/eh420/catkin_ws_ov_rgbd/devel/.private/octomap_server/include -I/home/eh420/catkin_ws_ov_rgbd/src/octomap_mapping/octomap_server/include -I/opt/ros/kinetic/include
+Libs: -L/home/eh420/catkin_ws_ov_rgbd/devel/.private/octomap_server/lib -loctomap_server /opt/ros/kinetic/lib/liboctomap.so /opt/ros/kinetic/lib/liboctomath.so
+Requires: roscpp visualization_msgs sensor_msgs pcl_ros pcl_conversions nav_msgs std_msgs std_srvs octomap_ros octomap_msgs dynamic_reconfigure nodelet

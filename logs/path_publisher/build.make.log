@@ -1,0 +1,4 @@
+[35m[1mScanning dependencies of target path_publisher[0m
+[ 50%] [32mBuilding CXX object CMakeFiles/path_publisher.dir/src/path_publisher.cpp.o[0m
+[100%] [32m[1mLinking CXX executable /home/eh420/catkin_ws_ov_rgbd/devel/.private/path_publisher/lib/path_publisher/path_publisher[0m
+[100%] Built target path_publisher

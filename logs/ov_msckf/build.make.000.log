@@ -1,0 +1,37 @@
+[35m[1mScanning dependencies of target ov_msckf_lib[0m
+[  4%] [32mBuilding CXX object CMakeFiles/ov_msckf_lib.dir/src/core/VioManager.cpp.o[0m
+[  8%] [32mBuilding CXX object CMakeFiles/ov_msckf_lib.dir/src/state/State.cpp.o[0m
+[ 13%] [32mBuilding CXX object CMakeFiles/ov_msckf_lib.dir/src/state/StateHelper.cpp.o[0m
+[ 17%] [32mBuilding CXX object CMakeFiles/ov_msckf_lib.dir/src/sim/Simulator.cpp.o[0m
+[ 21%] [32mBuilding CXX object CMakeFiles/ov_msckf_lib.dir/src/state/Propagator.cpp.o[0m
+[ 26%] [32mBuilding CXX object CMakeFiles/ov_msckf_lib.dir/src/update/UpdaterHelper.cpp.o[0m
+[ 30%] [32mBuilding CXX object CMakeFiles/ov_msckf_lib.dir/src/update/UpdaterSLAM.cpp.o[0m
+[ 34%] [32mBuilding CXX object CMakeFiles/ov_msckf_lib.dir/src/update/UpdaterMSCKF.cpp.o[0m
+[ 39%] [32mBuilding CXX object CMakeFiles/ov_msckf_lib.dir/src/map/Map.cpp.o[0m
+[ 43%] [32mBuilding CXX object CMakeFiles/ov_msckf_lib.dir/src/core/RosVisualizer.cpp.o[0m
+[ 47%] [32m[1mLinking CXX shared library /home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_msckf/lib/libov_msckf_lib.so[0m
+[ 47%] Built target ov_msckf_lib
+[35m[1mScanning dependencies of target run_serial_msckf[0m
+[35m[1mScanning dependencies of target run_subscribe_msckf_rgbd[0m
+[35m[1mScanning dependencies of target run_simulation[0m
+[35m[1mScanning dependencies of target test_sim_meas[0m
+[35m[1mScanning dependencies of target test_sim_repeat[0m
+[35m[1mScanning dependencies of target run_subscribe_msckf[0m
+[ 52%] [32mBuilding CXX object CMakeFiles/test_sim_repeat.dir/src/test_sim_repeat.cpp.o[0m
+[ 56%] [32mBuilding CXX object CMakeFiles/run_subscribe_msckf_rgbd.dir/src/ros_subscribe_msckf_rgbd.cpp.o[0m
+[ 60%] [32mBuilding CXX object CMakeFiles/run_subscribe_msckf.dir/src/ros_subscribe_msckf.cpp.o[0m
+[ 65%] [32mBuilding CXX object CMakeFiles/run_serial_msckf.dir/src/ros_serial_msckf.cpp.o[0m
+[ 69%] [32mBuilding CXX object CMakeFiles/test_sim_meas.dir/src/test_sim_meas.cpp.o[0m
+[ 73%] [32mBuilding CXX object CMakeFiles/run_simulation.dir/src/run_simulation.cpp.o[0m
+[ 78%] [32m[1mLinking CXX executable /home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_msckf/lib/ov_msckf/run_serial_msckf[0m
+[ 78%] Built target run_serial_msckf
+[ 82%] [32m[1mLinking CXX executable /home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_msckf/lib/ov_msckf/run_subscribe_msckf_rgbd[0m
+[ 82%] Built target run_subscribe_msckf_rgbd
+[ 86%] [32m[1mLinking CXX executable /home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_msckf/lib/ov_msckf/test_sim_meas[0m
+[ 91%] [32m[1mLinking CXX executable /home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_msckf/lib/ov_msckf/run_subscribe_msckf[0m
+[ 95%] [32m[1mLinking CXX executable /home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_msckf/lib/ov_msckf/test_sim_repeat[0m
+[ 95%] Built target test_sim_meas
+[ 95%] Built target run_subscribe_msckf
+[ 95%] Built target test_sim_repeat
+[100%] [32m[1mLinking CXX executable /home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_msckf/lib/ov_msckf/run_simulation[0m
+[100%] Built target run_simulation

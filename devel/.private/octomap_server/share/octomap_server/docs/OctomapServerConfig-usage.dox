@@ -1,0 +1,23 @@
+\subsubsection usage Usage
+\verbatim
+<node name="octomap_server_node" pkg="octomap_server" type="octomap_server_node">
+  <param name="compress_map" type="bool" value="True" />
+  <param name="incremental_2D_projection" type="bool" value="False" />
+  <param name="filter_speckles" type="bool" value="False" />
+  <param name="max_depth" type="int" value="16" />
+  <param name="pointcloud_min_z" type="double" value="-100.0" />
+  <param name="pointcloud_max_z" type="double" value="100.0" />
+  <param name="occupancy_min_z" type="double" value="-100.0" />
+  <param name="occupancy_max_z" type="double" value="100.0" />
+  <param name="sensor_model_max_range" type="double" value="-1.0" />
+  <param name="sensor_model_hit" type="double" value="0.7" />
+  <param name="sensor_model_miss" type="double" value="0.4" />
+  <param name="sensor_model_min" type="double" value="0.12" />
+  <param name="sensor_model_max" type="double" value="0.97" />
+  <param name="filter_ground" type="bool" value="False" />
+  <param name="ground_filter_distance" type="double" value="0.04" />
+  <param name="ground_filter_angle" type="double" value="0.15" />
+  <param name="ground_filter_plane_distance" type="double" value="0.07" />
+</node>
+\endverbatim
+
