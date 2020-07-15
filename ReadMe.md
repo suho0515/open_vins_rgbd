@@ -1,4 +1,21 @@
 
+# open_vins_rgbd
+
+open_vins_rgbd is modified version from open_vins.
+it can subscribe depth_image topic message and convert depth_image to point_cloud, also publish point_cloud topic to visualize using rviz.
+
+# pre-install
+octomap
+
+# datasets
+it used VINS-RGBD handheld datasets.
+
+# how to run
+'''
+$ roslaunch ov_msckf test_rgbd.launch
+'''
+
+
 
 # OpenVINS
 
