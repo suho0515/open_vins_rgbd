@@ -1,8 +1,0 @@
-prefix=/home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_core
-
-Name: ov_core
-Description: Description of ov_core
-Version: 1.0.0
-Cflags: -I/home/eh420/catkin_ws_ov_rgbd/src/open_vins/ov_core/src
-Libs: -L/home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_core/lib -lov_core_lib
-Requires: roscpp rosbag tf std_msgs geometry_msgs sensor_msgs nav_msgs visualization_msgs cv_bridge

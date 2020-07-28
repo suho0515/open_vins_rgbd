@@ -6,13 +6,13 @@
     <arg name="max_cameras" default="1" />
     <arg name="use_stereo"  default="false" />
     <arg name="bag_start"   default="0" />
-    <arg name="bag"         default="/home/eh420/datasets/lab/20200625_lab_01.bag" />
+    <arg name="bag"         default="/home/eh420/datasets/lab/20200720_hallway_01.bag" />
     <!--arg name="bag"         default="/home/eh420/datasets/vins_rgbd/handheld_Normal.bag" /-->
     <!--arg name="bag"         default="/home/eh420/datasets/vins_rgbd/Simple.bag" /-->
 
     <!-- imu starting thresholds -->
     <arg name="init_window_time"  default="5.0" />
-    <arg name="init_imu_thresh"   default="0.30" />
+    <arg name="init_imu_thresh"   default="0.03" />
 
     <!-- saving trajectory path and timing information -->
     <arg name="dosave"      default="false" />

@@ -1,1 +1,0 @@
-/home/eh420/catkin_ws_ov_rgbd/devel/.private/path_publisher/lib/pkgconfig/path_publisher.pc

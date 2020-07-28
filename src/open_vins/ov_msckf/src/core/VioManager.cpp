@@ -127,9 +127,8 @@ VioManager::VioManager(VioManagerOptions& params_) {
     updaterMSCKF = new UpdaterMSCKF(params.msckf_options,params.featinit_options);
     updaterSLAM = new UpdaterSLAM(params.slam_options,params.aruco_options,params.featinit_options);
 
-    // Make map class instance
+    // Map instance
     map = new Map();
-    map->set_calibration(params.camera_intrinsics);
     
 
 
@@ -203,13 +202,85 @@ void VioManager::feed_measurement_depth(double timestamp, cv::Mat& depth_img, si
     
 
     rT9 =  boost::posix_time::microsec_clock::local_time();
-
-    // If we do not have VIO initialization, then try to initialize
-    // TODO: Or if we are trying to reset the system, then do that here!
-    if(!is_initialized_vio) {
-        is_initialized_vio = try_to_initialize();
-        if(!is_initialized_vio) return;
+    
+    //initialize point cloud according to initialized pose
+    if(!is_initialized_vio) return;
+    else {
+        if(!is_initialized_pc) {
+            last_pc = comput_global_pc();
+            result_pc = last_pc;
+            return;
+        }
     }
+
+    std::vector<Eigen::Vector3d> pc = comput_global_pc();
+
+    // arrangement pointcloud to make the same number of point
+    // while(pc.size() != last_pc.size())
+    // {
+    //     if(pc.size() > last_pc.size())
+    //     {
+    //         pc.pop_back();
+    //     }
+    //     else if(pc.size() < last_pc.size())
+    //     {
+    //         last_pc.pop_back();
+    //     }
+    // }
+
+    
+    // std::pair<Eigen::Matrix3d, Eigen::Vector3d> T = map->get_rigid_transform(pc,last_pc);
+    // Eigen::Matrix3d R = T.first;
+    // Eigen::Vector3d t = T.second;
+    // for(size_t i=0;i<pc.size();i++)
+    // {
+    //     pc[i] = R*pc[i] + t;
+    // }
+    // std::cout << "pc.size() : " << pc.size() << std::endl;
+    // std::cout << "last_pc.size() : " << last_pc.size() << std::endl;
+
+    // icp process
+    // https://github.com/zjudmd1015/icp/blob/master/icp.cpp
+//     Eigen::MatrixXd pc_matrix = Eigen::MatrixXd::Map(pc[0].data(),
+//  3, pc.size());
+//     Eigen::MatrixXd last_pc_matrix = Eigen::MatrixXd::Map(last_pc[0].data(),
+//  3, last_pc.size());
+//     //std::cout << "pc_matrix : " << pc_matrix << std::endl;
+    
+//     ICP_OUT icp_result=icp(pc_matrix.transpose(),last_pc_matrix.transpose(),20,0.000001);
+
+//     Eigen::Matrix3d R = icp_result.trans.block<3,3>(0,0);
+//     Eigen::Vector3d t = icp_result.trans.block<3,1>(0,3);
+//     for(size_t i=0;i<pc.size();i++)
+//     {
+//         pc[i] = R.transpose()*pc[i] + t;
+//     }
+
+    // std::vector<float> dist = icp_result.distances;
+    // float mean = std::accumulate(dist.begin(),dist.end(),0.0)/dist.size();
+    // std::cout << "mean error is " << mean - 6 << std::endl << std::endl;
+    
+    
+    // the sequent point cloud have a error cause estimated state is wrong.
+    // in that situation, what would be best choice to correct error?...
+
+
+    for(size_t i=0;i<pc.size();i++)
+    {
+        result_pc.push_back(pc[i]);
+    }
+    last_pc = pc;
+
+    std::cout << "result_pc.size()" << result_pc.size() << std::endl;
+
+    result_pc = map->pointcloud_filtering(result_pc);
+    
+
+
+    // registration of two point cloud ( last point cloud and present point cloud)
+
+
+
 
     // Call on our propagate and update function
     //do_feature_propagate_update(timestamp);
@@ -348,6 +419,55 @@ bool VioManager::try_to_initialize() {
     return true;
 
 }
+
+std::vector<Eigen::Vector3d> VioManager::comput_global_pc()
+{
+    
+    Eigen::Matrix<double, 3, 3> R_GtoI = state->_imu->Rot();
+    Eigen::Matrix<double, 3, 1> p_IinG = state->_imu->pos();
+
+    Eigen::Matrix<double, 3, 3> R_ItoC = state->_calib_IMUtoCAM.at(0)->Rot();
+    Eigen::Matrix<double, 3, 1> p_IinC = state->_calib_IMUtoCAM.at(0)->pos();  
+
+    // Color to Depth
+    Eigen::Matrix<double, 3, 3> R_CtoD;
+    // R_CtoD <<   0.999995,        -0.00194712,      -0.00247722,    
+    //             0.00194194,       0.999996,        -0.00209038,    
+    //             0.00248128,       0.00208556,       0.999995;    
+
+    R_CtoD <<   0.98480775301,        0.0,      -0.17364817766,    
+                0.0,       1.0,        0.0,    
+                0.17364817766,       0.0,       0.98480775301;    
+
+    std::vector<Eigen::Vector3d> pc = map->get_pointcloud();
+    //std::cout << "pc.size() : "<< pc.size() << std::endl;
+
+    std::vector<Eigen::Vector3d> affined_pc;
+    for(size_t i=0;i<pc.size();i++)
+    {
+        Eigen::Vector3d pt;
+        //pt = Rot*pc[i]+pos;
+        pt = R_GtoI.transpose() * R_ItoC.transpose()*R_CtoD.transpose()*(pc[i] - p_IinC) + p_IinG;
+        affined_pc.push_back(pt);
+
+        //std::cout << "pt[0] :" << pt[0] << "pt[1] :" << pt[1] << "pt[2] :" << pt[2] << std::endl;
+        //std::cout << "affined_pc[0] :" << affined_pc[0] << "affined_pc[1] :" << affined_pc[1] << "affined_pc[2] :" << affined_pc[2] << std::endl; 
+    }
+
+    is_initialized_pc = true;
+
+    map->set_pointcloud(affined_pc);
+
+    return affined_pc;
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -631,13 +751,18 @@ void VioManager::do_feature_propagate_update(double timestamp) {
     if(timelastupdate != -1 && state->_clones_IMU.find(timelastupdate) != state->_clones_IMU.end()) {
         Eigen::Matrix<double,3,1> dx = state->_imu->pos() - state->_clones_IMU.at(timelastupdate)->pos();
         distance += dx.norm();
+
+        speed = dx.norm()/(state->_timestamp - timelastupdate);
+        //std::cout << "state->_timestamp : " << state->_timestamp << std::endl;
+        //std::cout << "timelastupdate : " << timelastupdate << std::endl;
+        //std::cout << "speed : " << speed << std::endl;
     }
     timelastupdate = timestamp;
 
     // Debug, print our current state
-    printf("q_GtoI = %.3f,%.3f,%.3f,%.3f | p_IinG = %.3f,%.3f,%.3f | dist = %.2f (meters)\n",
+    printf("q_GtoI = %.3f,%.3f,%.3f,%.3f | p_IinG = %.3f,%.3f,%.3f | dist = %.2f (meters) | speed = %.2f (m/s)\n",
             state->_imu->quat()(0),state->_imu->quat()(1),state->_imu->quat()(2),state->_imu->quat()(3),
-            state->_imu->pos()(0),state->_imu->pos()(1),state->_imu->pos()(2),distance);
+            state->_imu->pos()(0),state->_imu->pos()(1),state->_imu->pos()(2),distance,speed);
     printf("bg = %.4f,%.4f,%.4f | ba = %.4f,%.4f,%.4f\n",
              state->_imu->bias_g()(0),state->_imu->bias_g()(1),state->_imu->bias_g()(2),
              state->_imu->bias_a()(0),state->_imu->bias_a()(1),state->_imu->bias_a()(2));

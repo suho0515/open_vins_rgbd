@@ -39,11 +39,13 @@
 
 
 
+
 using namespace ov_msckf;
 
 
 VioManager* sys;
 RosVisualizer* viz;
+
 
 
 // Buffer data
@@ -67,6 +69,7 @@ int main(int argc, char** argv) {
     VioManagerOptions params = parse_ros_nodehandler(nh);
     sys = new VioManager(params);
     viz = new RosVisualizer(nh, sys);
+
 
 
     //===================================================================================
@@ -194,7 +197,7 @@ void callback_depth(const sensor_msgs::ImageConstPtr& msg) {
 
     // send it to our VIO system
     sys->feed_measurement_depth(depth_time_buffer, depth_img_buffer, 0);
-    viz->visualize();
+    //viz->visualize();
 
 
     // move buffer forward

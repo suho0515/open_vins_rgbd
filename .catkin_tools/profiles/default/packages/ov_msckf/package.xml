@@ -31,6 +31,9 @@
     <build_depend>cv_bridge</build_depend>
     <build_depend>ov_core</build_depend>
     <build_depend>octomap</build_depend>
+    <build_depend>octomap_ros</build_depend>
+    <build_depend>pcl</build_depend>
+    <build_depend>pcl_ros</build_depend>
 
 
 
@@ -48,6 +51,10 @@
     <run_depend>ov_eval</run_depend>
     <run_depend>ov_data</run_depend>
     <run_depend>octomap</run_depend>
+    <run_depend>octomap_ros</run_depend>
+    <run_depend>pcl</run_depend>
+    <run_depend>pcl_ros</run_depend>
+
 
 
 

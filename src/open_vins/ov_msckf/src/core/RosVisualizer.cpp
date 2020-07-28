@@ -54,6 +54,11 @@ RosVisualizer::RosVisualizer(ros::NodeHandle &nh, VioManager* app, Simulator *si
     pub_pointcloud = nh.advertise<sensor_msgs::PointCloud2>("/ov_msckf/pointcloud", 2);
     ROS_INFO("Publishing: %s", pub_pointcloud.getTopic().c_str());
 
+    // 20200512, edited by suho
+    // publish pointcloud from depth image
+    pub_result_pointcloud = nh.advertise<sensor_msgs::PointCloud2>("/ov_msckf/result_pointcloud", 2);
+    ROS_INFO("Publishing: %s", pub_result_pointcloud.getTopic().c_str());
+
     // Our tracking image
     pub_tracks = nh.advertise<sensor_msgs::Image>("/ov_msckf/trackhist", 2);
     ROS_INFO("Publishing: %s", pub_tracks.getTopic().c_str());
@@ -118,6 +123,10 @@ void RosVisualizer::visualize() {
     // 20200512, edited by suho 
     // publish point cloud
     publish_pointcloud();
+
+    // 20200722, edited by suho 
+    // publish result point cloud
+    publish_result_pointcloud();
 
     // Return if we have not inited
     if(!_app->initialized())
@@ -409,7 +418,7 @@ void RosVisualizer::publish_pointcloud() {
 
     // Declare message and sizes
     sensor_msgs::PointCloud2 cloud;
-    cloud.header.frame_id = "depth0";
+    cloud.header.frame_id = "global";
     cloud.header.stamp = ros::Time::now();
     cloud.width  = 3*pointcloud.size();
     cloud.height = 1;
@@ -442,6 +451,50 @@ void RosVisualizer::publish_pointcloud() {
 
 }
 
+//20200722, edited by suho
+// publish result pointcloud 
+void RosVisualizer::publish_result_pointcloud() {
+
+    // Check if we have subscribers
+    if(pub_tracks.getNumSubscribers()==0 || poses_imu.size() < 1)
+        return;
+
+    std::vector<Eigen::Vector3d> pointcloud = _app->get_result_pc();
+
+    // Declare message and sizes
+    sensor_msgs::PointCloud2 cloud;
+    cloud.header.frame_id = "global";
+    cloud.header.stamp = ros::Time::now();
+    cloud.width  = 3*pointcloud.size();
+    cloud.height = 1;
+    cloud.is_bigendian = false;
+    cloud.is_dense = false; // there may be invalid points
+
+    // Setup pointcloud fields
+    sensor_msgs::PointCloud2Modifier modifier(cloud);
+    modifier.setPointCloud2FieldsByString(1,"xyz");
+    modifier.resize(3*pointcloud.size());
+
+    // Iterators
+    sensor_msgs::PointCloud2Iterator<float> out_x(cloud, "x");
+    sensor_msgs::PointCloud2Iterator<float> out_y(cloud, "y");
+    sensor_msgs::PointCloud2Iterator<float> out_z(cloud, "z");
+
+    for (const auto &pt : pointcloud)
+    {
+
+        *out_x = pt(0);
+        ++out_x;
+        *out_y = pt(1);
+        ++out_y;
+        *out_z = pt(2);
+        ++out_z;
+    }
+
+    // Publish
+    pub_result_pointcloud.publish(cloud);
+
+}
 
 
 

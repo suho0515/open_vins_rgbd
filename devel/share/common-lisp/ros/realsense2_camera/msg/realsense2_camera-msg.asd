@@ -1,1 +1,0 @@
-/home/eh420/catkin_ws_ov_rgbd/devel/.private/realsense2_camera/share/common-lisp/ros/realsense2_camera/msg/realsense2_camera-msg.asd

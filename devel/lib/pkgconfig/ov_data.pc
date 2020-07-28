@@ -1,1 +1,0 @@
-/home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_data/lib/pkgconfig/ov_data.pc

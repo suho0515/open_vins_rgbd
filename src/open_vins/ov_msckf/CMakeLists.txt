@@ -18,13 +18,18 @@ find_package(catkin QUIET COMPONENTS
     visualization_msgs 
     cv_bridge 
     ov_core
-    octomap
+
+    pcl
+    pcl_ros
     )
 
 # Include libraries
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV 3 REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem thread date_time)
+find_package(octomap REQUIRED)
+find_package(octomap_ros REQUIRED)
+
 
 # display message to user
 message(STATUS "EIGEN VERSION: " ${EIGEN3_VERSION})
@@ -46,9 +51,14 @@ if (catkin_FOUND)
             visualization_msgs 
             cv_bridge 
             ov_core
+            octomap_ros
+
+            pcl
+            pcl_ros
 
             INCLUDE_DIRS src
             LIBRARIES ov_msckf_lib
+
     )
 else()
     message(WARNING "CATKIN NOT FOUND BUILDING WITHOUT ROS!")
@@ -80,13 +90,19 @@ include_directories(
         ${Boost_INCLUDE_DIRS}
         ${catkin_INCLUDE_DIRS}
         ${OCTOMAP_INCLUDE_DIRS}
+
 )
+
+# link directory
+link_directories(${OCTOMAP_LIBRARY_DIRS})
 
 # Set link libraries used by all binaries
 list(APPEND thirdparty_libraries
         ${Boost_LIBRARIES}
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES}
+        ${OCTOMAP_LIBRARIES}
+
 )
 
 # If we are not building with ROS then we need to manually link to its headers
@@ -111,6 +127,7 @@ list(APPEND library_source_files
         src/update/UpdaterMSCKF.cpp
         src/update/UpdaterSLAM.cpp
         src/map/Map.cpp
+        src/map/icp.cpp
 )
 if (catkin_FOUND)
     list(APPEND library_source_files
@@ -136,7 +153,7 @@ if (catkin_FOUND)
     target_link_libraries(run_subscribe_msckf ov_msckf_lib ${thirdparty_libraries})
 
     add_executable(run_subscribe_msckf_rgbd src/ros_subscribe_msckf_rgbd.cpp)
-    target_link_libraries(run_subscribe_msckf_rgbd ov_msckf_lib ${thirdparty_libraries} ${OCTOMAP_LIBRARIES})
+    target_link_libraries(run_subscribe_msckf_rgbd ov_msckf_lib ${thirdparty_libraries} -lpcl_filters ${PCL_LIBRARIES})
 
     add_executable(run_simulation src/run_simulation.cpp)
     target_link_libraries(run_simulation ov_msckf_lib ${thirdparty_libraries})

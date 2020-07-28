@@ -1,8 +1,0 @@
-prefix=/home/eh420/catkin_ws_ov_rgbd/devel/.private/path_publisher
-
-Name: path_publisher
-Description: Description of path_publisher
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/eh420/catkin_ws_ov_rgbd/devel/.private/path_publisher/lib 
-Requires: 

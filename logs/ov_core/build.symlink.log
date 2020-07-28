@@ -1,6 +1,0 @@
-Symlinking /home/eh420/catkin_ws_ov_rgbd/devel/share/ov_core/cmake/ov_coreConfig.cmake
-Symlinking /home/eh420/catkin_ws_ov_rgbd/devel/share/ov_core/cmake/ov_coreConfig-version.cmake
-Symlinking /home/eh420/catkin_ws_ov_rgbd/devel/lib/libov_core_lib.so
-Symlinking /home/eh420/catkin_ws_ov_rgbd/devel/lib/pkgconfig/ov_core.pc
-Symlinking /home/eh420/catkin_ws_ov_rgbd/devel/lib/ov_core/test_tracking
-Symlinking /home/eh420/catkin_ws_ov_rgbd/devel/lib/ov_core/test_webcam

@@ -41,11 +41,18 @@
 #include "state/StateHelper.h"
 #include "update/UpdaterMSCKF.h"
 #include "update/UpdaterSLAM.h"
-#include "map/Map.h"
 
 #include "VioManagerOptions.h"
 
+#include "map/Map.h"
 
+// 20200722, edited by suho
+// for icp process
+#include <Eigen/SVD>
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
+
+#include "map/icp.h"
 
 namespace ov_msckf {
 
@@ -203,9 +210,16 @@ namespace ov_msckf {
             return slam_feats;
         }
 
+        /// edited by suho
         /// Get map class instance
         Map* get_map() {
             return map;
+        }
+
+        /// 20200722, edited by suho
+        /// return result point cloud
+        std::vector<Eigen::Vector3d> get_result_pc() {
+            return result_pc;
         }
 
         /// Returns 3d ARUCO features in the global frame
@@ -248,11 +262,19 @@ namespace ov_msckf {
         bool try_to_initialize();
 
 
+
         /**
          * @brief This will do the propagation and feature updates to the state
          * @param timestamp The most recent timestamp we have tracked to
          */
         void do_feature_propagate_update(double timestamp);
+
+        /**
+         * @brief compute point cloud in global frame according to first initialized pose
+         */
+        std::vector<Eigen::Vector3d> comput_global_pc();
+
+
 
         /// Manager parameters
         VioManagerOptions params;
@@ -292,12 +314,25 @@ namespace ov_msckf {
         double timelastupdate = -1;
         double distance = 0;
 
+        // 20200723, edited by suho
+        // Calculate speed of each movement.
+        //Eigen::Matrix<double, 3, 1> pre_pose;
+        double speed = 0;
+
         // Startup time of the filter
         double startup_time = -1;
 
         /// Handle map data from depth image of rgbd camera to point cloud map
         Map* map = nullptr;
 
+        /// Boolean if we are initialized point cloud or not
+        bool is_initialized_pc = false;
+
+        /// last point cloud data
+        std::vector<Eigen::Vector3d> last_pc;
+
+        /// result point cloud data
+        std::vector<Eigen::Vector3d> result_pc;
     };
 
 

@@ -1,1 +1,0 @@
-/home/eh420/catkin_ws_ov_rgbd/devel/.private/ov_core/share/ov_core/cmake/ov_coreConfig.cmake
