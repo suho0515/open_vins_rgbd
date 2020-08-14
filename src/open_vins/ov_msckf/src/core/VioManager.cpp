@@ -328,7 +328,7 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
     // }
 
 
-
+ 
 
     // Eigen::Matrix<double,16,1> imu_x = state->_imu->value();
     // Eigen::Vector3d new_p(state->_imu->pos()[0], state->_imu->pos()[1], state->_imu->pos()[2]+compensate_z);
