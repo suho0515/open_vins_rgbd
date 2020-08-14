@@ -58,6 +58,8 @@
 
 #include "core/VioManagerOptions.h"
 
+#include <algorithm>
+
 namespace ov_msckf {
 
 
@@ -90,7 +92,7 @@ namespace ov_msckf {
          * @param depth_img new cv:Mat depth image
          * @param cam_id the camera id that this new image corresponds too
          */
-        void feed_depth(double timestamp, cv::Mat &depth_img, size_t cam_id);
+        void feed_depth(octomap::OcTree octree, double timestamp, cv::Mat &depth_img, size_t cam_id);
 
         /**
          * @brief Return pointcloud 
@@ -121,9 +123,42 @@ namespace ov_msckf {
          * @brief point cloud filtering
          * @param pointcloud raw point cloud data
          */
-        std::vector<Eigen::Vector3d> pointcloud_filtering(std::vector<Eigen::Vector3d> &pointcloud);
+        std::vector<Eigen::Vector3d> pointcloud_filtering(std::vector<Eigen::Vector3d> &pointcloud, float octree_num);
+
+                /**
+         * @brief point cloud filtering
+         * @param pointcloud raw point cloud data
+         */
+        std::vector<Eigen::Vector3d> pointcloud_mean_filtering(std::vector<Eigen::Vector3d> &pointcloud);
+
+        /**
+         * @brief later
+         */
+        std::vector<Eigen::Vector3d> get_elevation(std::vector<Eigen::Vector3d> &pointcloud, std::string name) {
+            
+            return elevation(pointcloud, name);
+        }
+
+        /**
+         * @brief later
+         * @param pointcloud filtered point cloud data
+         */
+        cv::Mat pointcloud_to_mat(std::vector<Eigen::Vector3d> &pointcloud, std::string name);
+
+        /**
+         * @brief later
+         * @param pointcloud filtered point cloud data
+         */
+        std::vector<Eigen::Vector3d> compare_elevation(cv::Mat result_mat, std::vector<Eigen::Vector3d> &pointcloud, std::string name, std::vector<Eigen::Vector3d> &pointcloud_each);
 
 
+        /**
+         * @brief later
+         * @param pointcloud filtered point cloud data
+         */
+        std::vector<Eigen::Vector3d> align_pointcloud(std::vector<Eigen::Vector3d> &pointcloud);
+
+        
     protected:
 
         /**
@@ -142,6 +177,12 @@ namespace ov_msckf {
 
 
 
+
+        /**
+         * @brief later
+         * @param pointcloud filtered point cloud data
+         */
+        std::vector<Eigen::Vector3d> elevation(std::vector<Eigen::Vector3d> &pointcloud, std::string name);
 
         
 
@@ -179,6 +220,8 @@ namespace ov_msckf {
         std::vector<cv::KeyPoint> last_pts;
         cv::Mat last_depth_img;
         std::vector<cv::Mat> last_imgpyr;
+
+        bool elevate_minmax_initialize_flag = false;
 
     };
 

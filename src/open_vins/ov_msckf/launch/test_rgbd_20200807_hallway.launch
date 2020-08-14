@@ -6,13 +6,13 @@
     <arg name="max_cameras" default="1" />
     <arg name="use_stereo"  default="false" />
     <arg name="bag_start"   default="0" />
-    <arg name="bag"         default="/home/eh420/datasets/lab/20200624_lab_02.bag" />
+    <arg name="bag"         default="/home/eh420/datasets/lab/20200807_hallway_01.bag" />
     <!--arg name="bag"         default="/home/eh420/datasets/vins_rgbd/handheld_Normal.bag" /-->
     <!--arg name="bag"         default="/home/eh420/datasets/vins_rgbd/Simple.bag" /-->
 
     <!-- imu starting thresholds -->
     <arg name="init_window_time"  default="5.0" />
-    <arg name="init_imu_thresh"   default="0.08" />
+    <arg name="init_imu_thresh"   default="0.03" />
 
     <!-- saving trajectory path and timing information -->
     <arg name="dosave"      default="false" />
@@ -106,12 +106,12 @@
 
 
     <!-- play the dataset -->
-    <node pkg="rosbag" type="play" name="rosbag" args="-u 100 -r 1 -d 1 -s $(arg bag_start) $(arg bag)" required="true"/>
+    <node pkg="rosbag" type="play" name="rosbag" args="-u 200 -r 1 -d 1 -s $(arg bag_start) $(arg bag)" required="true"/>
 
     <node pkg="tf"
         type="static_transform_publisher"
-        name="world_to_global"
-        args="0.0 0.0 0.0 0.0 0.0 0.0 world global 100" />    
+        name="cam0_to_depth0"
+        args="0.0 0.0 0.0 0.0 0.0 0.0 cam0 depth0 100" />    
 
 
 

@@ -187,7 +187,9 @@ void VioManager::feed_measurement_monocular(double timestamp, cv::Mat& img0, siz
 
 }
 
-void VioManager::feed_measurement_depth(double timestamp, cv::Mat& depth_img, size_t cam_id) {
+
+
+void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp, cv::Mat& depth_img, size_t cam_id) {
 
     // Start timing
     rT8 =  boost::posix_time::microsec_clock::local_time();
@@ -197,7 +199,8 @@ void VioManager::feed_measurement_depth(double timestamp, cv::Mat& depth_img, si
     
 
     // Feed our depth image
-    map->feed_depth(timestamp, depth_img, cam_id);
+    map->feed_depth(octree, timestamp, depth_img, cam_id);
+
 
     
 
@@ -208,12 +211,31 @@ void VioManager::feed_measurement_depth(double timestamp, cv::Mat& depth_img, si
     else {
         if(!is_initialized_pc) {
             last_pc = comput_global_pc();
+            //last_pc = map->align_pointcloud(last_pc);
+            //last_pc = pointcloud_filtering(octree,last_pc);
             result_pc = last_pc;
+            stored_pc = last_pc;
             return;
         }
     }
 
     std::vector<Eigen::Vector3d> pc = comput_global_pc();
+    //pc = map->align_pointcloud(pc);
+
+    // keep store original point cloud (of coures each pc is filtered at first)
+    for(const auto& p: pc)
+    {
+        stored_pc.push_back(p);
+    }
+
+    while(stored_pc.size() > 10000) stored_pc.erase(stored_pc.begin());
+
+    filtered_pc = map->pointcloud_filtering(stored_pc,0.1);
+    aligned_pc = filtered_pc;
+
+
+    
+    
 
     // arrangement pointcloud to make the same number of point
     // while(pc.size() != last_pc.size())
@@ -264,18 +286,109 @@ void VioManager::feed_measurement_depth(double timestamp, cv::Mat& depth_img, si
     // the sequent point cloud have a error cause estimated state is wrong.
     // in that situation, what would be best choice to correct error?...
 
+    // for(const auto& p: pc) {
+    //     //if(isinf(p[0]) || isinf(p[1]) || isinf(p[2])
+    //     //    || fabs(p[0]) > 100.0 || fabs(p[1]) > 100.0 || fabs(p[2]) > 100.0) {
+    //         std::cout << "  p[0] = " << p[0] << "  p[1] = " << p[1] << "  p[2] = " << p[2] << std::endl;
+    //     //}
+    // }
 
-    for(size_t i=0;i<pc.size();i++)
-    {
-        result_pc.push_back(pc[i]);
-    }
-    last_pc = pc;
 
-    std::cout << "result_pc.size()" << result_pc.size() << std::endl;
 
-    result_pc = map->pointcloud_filtering(result_pc);
+    //cv::Mat elevation_mat = map->pointcloud_to_mat(result_pc,"result_frame_2");
     
 
+    // float sum = 0.0;
+    // int cnt_same = 0;
+    // float mean = 0.0;
+    // for(const auto& p_1: pc) {
+    //     for(const auto& p_2: result_pc) {
+    //         if(p_1[0] == p_2[0] && p_1[1] == p_2[1] && p_2[2] < 0.1 ) {
+    //             //std::cout << "p_1[2] : " << p_1[2] << ", " << "p_2[2] : " << p_2[2] << std::endl;
+    //             //std::cout << "std::fabs(p_2[2]-p_1[2]) : " << std::fabs(p_2[2]-p_1[2]) << std::endl;
+    //             sum += std::fabs(p_2[2]-p_1[2]);
+                
+    //             cnt_same++;
+    //         }
+    //     }
+    // }
+    // //std::cout << "sum : " << sum << std::endl;
+    // mean = sum / (float)cnt_same;
+    // int avg = (int)(mean / 0.1);
+    // std::cout << "mean : " << mean << std::endl;
+    // std::cout << "avg : " << avg << std::endl;
+    // if(mean > 0.05) {
+        
+    //     int i = 0;
+    //     for(const auto& p: pc) {
+    //         Eigen::Vector3d new_p(p[0], p[1], p[2]-(0.1*(float)avg));
+    //         pc[i] = new_p;
+    //         i++;
+    //     }
+    // }
+
+
+
+
+    // Eigen::Matrix<double,16,1> imu_x = state->_imu->value();
+    // Eigen::Vector3d new_p(state->_imu->pos()[0], state->_imu->pos()[1], state->_imu->pos()[2]+compensate_z);
+    // imu_x.block(4,0,3,1) = new_p;
+
+    // state->_imu->set_value(imu_x);
+
+    //result_pc = map->compare_elevation(result_pc,"test", filtered_pc);
+
+    filtered_pc = map->get_elevation(filtered_pc,"filtered_frame");
+
+    for(const auto& p: filtered_pc) {
+        result_pc.push_back(p);
+    }
+    last_pc = pc;
+    std::cout << "stored_pc.size()" << stored_pc.size() << std::endl;
+    std::cout << "result_pc.size()" << result_pc.size() << std::endl;
+
+    // compare elevation
+    // ------------------------------
+    //cv::Mat result_mat;
+    //result_mat = map->pointcloud_to_mat(result_pc,"result");
+
+    //result_pc = map->compare_elevation(result_mat, result_pc,"test", filtered_pc);
+    // ------------------------------
+    //result_pc = map->pointcloud_filtering(result_pc,0.1);
+
+    //Eigen::Vector3d zero_vec(0.0,0.0,0.0);
+    //result_pc.erase(std::remove(result_pc.begin(),result_pc.end(),zero_vec),result_pc.end());
+    
+    // bool _predicate(const Eigen::Vector3d& p) {
+    //     return ((p[0]>=0.0 && p[0] < 0.05) || (p[1]>=0.0 && p[1] < 0.05) || (p[2]>=0.0 && p[2] < 0.05)
+    //             || (p[0]<0.0 && p[0] < -10.0) || (p[1]<0.0 && p[1] < -10.0) || (p[2]<0.0 && p[2] < -10.0)); 
+    // }
+    // result_pc.erase(std::remove_if(result_pc.begin(), result_pc.end(), _predicate), result_pc.end());
+    
+    // std::vector<Eigen::Vector3d>::iterator it = result_pc.begin();
+    // while(it != result_pc.end()) {
+    //     if(((*it)[0]>=0.0 && (*it)[0] < 0.05) || ((*it)[1]>=0.0 && (*it)[1] < 0.05) || ((*it)[2]>=0.0 && (*it)[2] < 0.05)
+    //         || ((*it)[0]<0.0 && (*it)[0] < -10.0) || ((*it)[1]<0.0 && (*it)[1] < -10.0) || ((*it)[2]<0.0 && (*it)[2] < -10.0)
+    //         || ((*it)[0]>=0.0 && (*it)[0] > 10.0) || ((*it)[1]>=0.0 && (*it)[1] > 10.0) || ((*it)[2]>=0.0 && (*it)[2] > 10.0))
+    //         it = result_pc.erase(it);
+    //     else
+    //         ++it;
+    // }
+    
+
+
+
+
+    //result_pc = map->pointcloud_to_mat(result_pc);
+    result_pc = map->get_elevation(result_pc,"result_map");
+    
+    // for(const auto& p: result_pc) {
+    //     if(isinf(p[0]) || isinf(p[1]) || isinf(p[2])
+    //         || fabs(p[0]) > 100.0 || fabs(p[1]) > 100.0 || fabs(p[2]) > 100.0
+    //         || p[0] == 0 || p[1] == 0 || p[2] == 0) {
+    //         std::cout << "  p[0] = " << p[0] << "  p[1] = " << p[1] << "  p[2] = " << p[2] << std::endl;
+    //     }
+    // }
 
     // registration of two point cloud ( last point cloud and present point cloud)
 
@@ -461,7 +574,39 @@ std::vector<Eigen::Vector3d> VioManager::comput_global_pc()
     return affined_pc;
 }
 
+std::vector<Eigen::Vector3d> VioManager::pointcloud_filtering(octomap::OcTree octree, std::vector<Eigen::Vector3d> &pointcloud)
+{
+    
+    for (auto p:pointcloud)
+    {
+        octree.updateNode( octomap::point3d(p[0], p[1], p[2]), true );
+    }
+    octree.updateInnerOccupancy();
+    
+    std::vector<Eigen::Vector3d> filtered_pointcloud;
+    filtered_pointcloud.resize( octree.getNumLeafNodes() );
+    //std::cout << "  octree.getNumLeafNodes() = " << octree.getNumLeafNodes() << std::endl;
+    int i=0;
+    for(octomap::OcTree::leaf_iterator it = octree.begin_leafs(), end = octree.end_leafs(); it != end; ++it){
+            // Fetching the coordinates in octomap-space
+            // std::cout << "  x = " << it.getX() << std::endl;
+            // std::cout << "  y = " << it.getY() << std::endl;
+            // std::cout << "  z = " << it.getZ() << std::endl;
+            // std::cout << "  size = " << it.getSize() << std::endl;
+            // std::cout << "  depth = " << it.getDepth() << std::endl;
+            filtered_pointcloud[i][0] = it.getX();
+            filtered_pointcloud[i][1] = it.getY();
+            filtered_pointcloud[i][2] = it.getZ();
+            // std::cout << "  x = " << filtered_pointcloud[i][0] << std::endl;
+            // std::cout << "  y = " << filtered_pointcloud[i][1] << std::endl;
+            // std::cout << "  z = " << filtered_pointcloud[i][2] << std::endl;
+            i++;
+    }
 
+
+
+    return filtered_pointcloud;
+}
 
 
 
@@ -701,6 +846,18 @@ void VioManager::do_feature_propagate_update(double timestamp) {
     }
     rT7 =  boost::posix_time::microsec_clock::local_time();
 
+
+    //===================================================================================
+    // Can i do something here?
+    //===================================================================================
+
+
+    Eigen::Matrix<double,16,1> imu_x = state->_imu->value();
+    Eigen::Vector3d new_p(state->_imu->pos()[0], state->_imu->pos()[1], state->_imu->pos()[2]);
+    imu_x.block(4,0,3,1) = new_p;
+
+    state->_imu->set_value(imu_x);
+    
 
     //===================================================================================
     // Debug info, and stats tracking

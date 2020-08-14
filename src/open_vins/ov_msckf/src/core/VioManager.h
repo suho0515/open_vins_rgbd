@@ -54,6 +54,10 @@
 
 #include "map/icp.h"
 
+#include <octomap/octomap.h>
+#include <octomap/OcTree.h>
+#include <octomap/OcTreeIterator.hxx>
+
 namespace ov_msckf {
 
 
@@ -101,7 +105,7 @@ namespace ov_msckf {
          * @param depth_img Grayscale image
          * @param cam_id Unique id of what camera the image is from
          */
-        void feed_measurement_depth(double timestamp, cv::Mat& depth_img, size_t cam_id);
+        void feed_measurement_depth(octomap::OcTree octree, double timestamp, cv::Mat& depth_img, size_t cam_id);
 
 
         /**
@@ -222,6 +226,10 @@ namespace ov_msckf {
             return result_pc;
         }
 
+        std::vector<Eigen::Vector3d> get_aligned_pc() {
+            return aligned_pc;
+        }
+
         /// Returns 3d ARUCO features in the global frame
         std::vector<Eigen::Vector3d> get_features_ARUCO() {
             std::vector<Eigen::Vector3d> aruco_feats;
@@ -274,7 +282,9 @@ namespace ov_msckf {
          */
         std::vector<Eigen::Vector3d> comput_global_pc();
 
+        std::vector<Eigen::Vector3d> pointcloud_filtering(octomap::OcTree octree, std::vector<Eigen::Vector3d> &pointcloud);
 
+        
 
         /// Manager parameters
         VioManagerOptions params;
@@ -331,8 +341,16 @@ namespace ov_msckf {
         /// last point cloud data
         std::vector<Eigen::Vector3d> last_pc;
 
+        std::vector<Eigen::Vector3d> aligned_pc;
+
         /// result point cloud data
         std::vector<Eigen::Vector3d> result_pc;
+
+        /// filtered point cloud data
+        std::vector<Eigen::Vector3d> filtered_pc;
+
+        /// filtered point cloud data
+        std::vector<Eigen::Vector3d> stored_pc;
     };
 
 

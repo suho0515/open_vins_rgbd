@@ -37,7 +37,9 @@
 #include "utils/dataset_reader.h"
 #include "utils/parse_ros.h"
 
-
+#include <octomap/octomap.h>
+#include <octomap/OcTree.h>
+#include <octomap/OcTreeIterator.hxx>
 
 
 using namespace ov_msckf;
@@ -46,7 +48,7 @@ using namespace ov_msckf;
 VioManager* sys;
 RosVisualizer* viz;
 
-
+octomap::OcTree octree( 0.1 );
 
 // Buffer data
 double time_buffer = -1;
@@ -196,7 +198,7 @@ void callback_depth(const sensor_msgs::ImageConstPtr& msg) {
     
 
     // send it to our VIO system
-    sys->feed_measurement_depth(depth_time_buffer, depth_img_buffer, 0);
+    sys->feed_measurement_depth(octree, depth_time_buffer, depth_img_buffer, 0);
     //viz->visualize();
 
 
