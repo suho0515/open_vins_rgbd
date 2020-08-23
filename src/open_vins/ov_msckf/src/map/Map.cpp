@@ -65,95 +65,27 @@ void Map::feed_depth(octomap::OcTree octree, double timestamp, cv::Mat &depth_im
     // Start timing
     rT1 =  boost::posix_time::microsec_clock::local_time();
 
-    //cv::imshow("depth_img",depth_img);
     // depth image filtering ( bacause there are too many noise )
     cv::Mat median_filtered_img;
     cv::medianBlur(depth_img,median_filtered_img,7);
     //cv::imshow("median_filtered_img",median_filtered_img);
 
-    // convert depth image, for using processing
-    // raw depth image is "CV_16U", it's not useful for processing
-    // cv::Mat depth_img_8u;
-    // double min, max;
-    // cv::minMaxIdx(median_filtered_img, &min, &max);    
-    // median_filtered_img.convertTo(depth_img_8u, CV_8U,255.0/(max-min),-255.0*min/(max-min));
-    // cv::imshow("depth_img_8u",depth_img_8u);
-
-    // interpolation
-    // cv::Mat interpolated_img;
-    // cv::resize(depth_img_8u,interpolated_img,cv::Size( depth_img_8u.cols, depth_img_8u.rows ), 0, 0, CV_INTER_LINEAR);
-    // cv::imshow("interpolated_img",interpolated_img);
-
-    // we need to care about noise of edge.
-    // let's denoise it.
-    // cv::Mat edge_img;
-    // cv::Canny(interpolated_img,edge_img,50,100);
-    // cv::imshow("edge_img",edge_img);
-
-    //trackFEATS->feed_monocular(timestamp, depth_img_8u, 0);
-
-    cv::waitKey(10);
-    // // histogram equalization
-    // cv::Mat equal_img;
-    // cv::equalizeHist( depth_img_8u, equal_img );
-    // cv::imshow("equal_img",equal_img);
-
-    // // Extract the new image pyramid
-    // std::vector<cv::Mat> imgpyr;
-    // cv::buildOpticalFlowPyramid(equal_img, imgpyr, win_size, pyr_levels);
-
-    // if(last_pts.empty()) {
-    //     feature_detection(imgpyr, last_pts);
-    //     last_depth_img = depth_img;
-    //     last_imgpyr = imgpyr;
-    //     return;
-    // }
-
-    // last_depth_img = depth_img;
-    // last_imgpyr = imgpyr;
+    //cv::waitKey(10);
 
     // getting point cloud data from depth image
-    pointcloud = depth_to_pointcloud(depth_img);
+    pointcloud = depth_to_pointcloud(median_filtered_img);
 
-
-    
-    // cv::Mat eroded_img;
-    // cv::erode(img,eroded_img,cv::Mat());
-    // cv::imshow("eroded_img",eroded_img);
-
-    // cv::Mat dilated_img;
-    // cv::dilate(img,dilated_img,cv::Mat());
-    // cv::imshow("dilated_img",dilated_img);
-
-    // cv::Mat element(7,7,CV_8U,cv::Scalar(1));
-    // cv::Mat big_dilated_img;
-    // cv::dilate(img,big_dilated_img,element);
-    // cv::imshow("big_dilated_img",big_dilated_img);
-
-    // cv::Mat three_dilated_img;
-    // cv::dilate(big_dilated_img,three_dilated_img,cv::Mat(),cv::Point(-1,-1),3);
-    // cv::imshow("three_dilated_img",three_dilated_img);
-
-    // cv::Mat element5(3,3,CV_8U,cv::Scalar(1));
-    // cv::Mat closed_img;
-    // cv::morphologyEx(img,closed_img,cv::MORPH_CLOSE,element5);
-    // cv::imshow("closed_img",closed_img);
-
-    // cv::Mat opened_img;
-    // cv::morphologyEx(img,opened_img,cv::MORPH_OPEN,element5);
-    // cv::imshow("opened_img",opened_img);
-
-    // filtering pointcloud
+    // filtering pointcloud (octomap)
     pointcloud = pointcloud_filtering(pointcloud,0.1);
     
     // for(int n=0;n<1;n++)
     //     pointcloud = pointcloud_mean_filtering(pointcloud);
-
     
     //pointcloud = pointcloud_to_mat(pointcloud);
     
-
+    // elevation pointcloud
     pointcloud = elevation(pointcloud,"each_frame");
+    //std::cout << "pointcloud.size() : " << pointcloud.size() << std::endl; 
 
 
     
@@ -228,112 +160,6 @@ std::vector<Eigen::Vector3d> Map::depth_to_pointcloud(cv::Mat &depth_img) {
     float cx = 380.70391845703125;
     float cy = 242.1943817138672;
 
-
-
-    // 20200715, edited by suho.
-    // depth image filtering ( bacause there are too many noise )
-    // cv::imshow("depth_img",depth_img);
-    // cv::medianBlur(depth_img,depth_img,7);
-    //cv::imshow("depthmap_rgb",depthmap_rgb);
-    //std::cout<<"Mat.type() : "<<depth_img.type()<<std::endl;
-    //std::cout<<"Mat.channels() : "<<depth_img.channels()<<std::endl;
-
-    // let's try median filter to see how it's gonna be stable.
-    // it sure has effect.
-    // more filtering more stable, but compute cost is increase too.
-    // cv::Mat median_filtered_img;
-    // cv::medianBlur(depth_img,median_filtered_img,7);
-    // cv::medianBlur(median_filtered_img,median_filtered_img,7);
-    // cv::medianBlur(median_filtered_img,median_filtered_img,7);
-    // cv::medianBlur(median_filtered_img,median_filtered_img,7);
-    // cv::medianBlur(median_filtered_img,median_filtered_img,7);
-    // cv::imshow("median_filtered_img",median_filtered_img);
-
-    // convert depth image, for using processing
-    // raw depth image is "CV_16U", it's not useful for processing
-    // cv::Mat depth_img_8u;
-    // double min, max;
-    // cv::minMaxIdx(median_filtered_img, &min, &max);    
-    // median_filtered_img.convertTo(depth_img_8u, CV_8U,255.0/(max-min),-255.0*min/(max-min));
-    // cv::imshow("depth_img_8u",depth_img_8u);
-    //std::cout<<"depth_img_8u.channels() : "<<depth_img_8u.channels()<<std::endl;
-    //std::cout<<"min : "<<min<<std::endl;
-    //std::cout<<"max : "<<max<<std::endl;
-
-    // let's multiply some value to depth image to see clear
-    //cv::Mat multipled_img;
-    //multipled_img = depth_img_8u*8;
-    //cv::imshow("multipled_img",multipled_img);
-
-
-
-    // try bilateral filter to see what would be better filter
-    //cv::Mat bilateral_img;
-    //cv::bilateralFilter(depth_img_8u,bilateral_img, 10, 50, 50);
-    //cv::imshow("bilateral_img",bilateral_img);
-
-    // interpolation
-    //cv::Mat interpolated_img;
-    //cv::resize(depth_img_8u,interpolated_img,cv::Size( depth_img_8u.cols, depth_img_8u.rows ), 0, 0, CV_INTER_LINEAR);
-    //cv::imshow("interpolated_img",interpolated_img);
-
-
-
-    // histogram equalization
-    // cv::Mat equal_img;
-    // cv::equalizeHist( depth_img_8u, equal_img );
-    // cv::imshow("equal_img",equal_img);
-
-
-    // we need to care about noise of edge.
-    // let's denoise it.
-    //cv::Mat edge_img;
-    //cv::Canny(depth_img_8u,edge_img,50,100);
-    //cv::imshow("edge_img",edge_img);
-
-    //cv::Mat edge_img_2;
-    //cv::Canny(median_filtered_img,edge_img_2,50,100);
-    //cv::imshow("edge_img_2",edge_img_2);
-
-    //cv::Mat edge_img_3;
-    //cv::Canny(equal_img,edge_img_3,50,100);
-    //cv::imshow("edge_img_3",edge_img_3);
-
-
-    // find edge
-    //vector<vector<cv::Point> > contours;
-    //vector<cv::Vec4i> hierarchy;
-
-    //cv::findContours( edge_img, contours, hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE );
-
-    // for(int i = 0; i < contours.size(); i++)
-    // {
-    //     for(int j = 0; j < contours[i].size(); j++)
-    //         std::cout << contours[i][j].x << "x" << contours[i][j].y << " ";
-    //     std::cout << std::endl;
-    // }
-
-
-    
-    // cv::waitKey(10);
-
-
-    // adapt to point cloud
-    //depth_img = median_filtered_img/8;
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
     std::vector<Eigen::Vector3d> pointcloud;
 
      for ( int m = 0 ; m <depth_img. rows ; m ++)
@@ -343,28 +169,11 @@ std::vector<Eigen::Vector3d> Map::depth_to_pointcloud(cv::Mat &depth_img) {
             ushort d = depth_img. ptr < ushort > (m) [n];
             //std::cout << "d : " << d << std::endl;
 
-            // Get the value at (m, n) in the edge map
-            // ushort edge_1 = edge_img. ptr < ushort > (m-1) [n-1];
-            // ushort edge_2 = edge_img. ptr < ushort > (m-1) [n];
-            // ushort edge_3 = edge_img. ptr < ushort > (m-1) [n+1];
-            // ushort edge_4 = edge_img. ptr < ushort > (m) [n-1];
-            // ushort edge_5 = edge_img. ptr < ushort > (m) [n];
-            // ushort edge_6 = edge_img. ptr < ushort > (m) [n+1];
-            // ushort edge_7 = edge_img. ptr < ushort > (m+1) [n-1];
-            // ushort edge_8 = edge_img. ptr < ushort > (m+1) [n];
-            // ushort edge_9 = edge_img. ptr < ushort > (m+1) [n+1];
-
             // d may have no value, if so, skip this point
             // if depth is too far, it could be very noisy.
             // too solve that issue, i limit depth to 5000
-            if (d == 0 || d > 5000 )
-                continue ;
-
-
-
-            // d exists, then add a point to the point cloud
-            //if(edge_1==255 || edge_2==255 || edge_3==255 || edge_4==255 || edge_5==255 || edge_6==255 || edge_7==255 || edge_8==255 || edge_9==255)
-            //    continue ;
+            if (d == 0) continue;
+            if (d > 5000) continue;
                      
             // Calculate the spatial coordinates of this point
             float z = double (d) / 1000; // 1000 is camera factor
@@ -373,15 +182,12 @@ std::vector<Eigen::Vector3d> Map::depth_to_pointcloud(cv::Mat &depth_img) {
             //std::cout << "y : " << y << std::endl;
             // delete ceiling and floor
             if(y < 0.0 || y > 1.0 ) continue;
-            //if(y < -0.5) continue;
             if(x < -4.0 || x > 4.0 ) continue;
 
             Eigen::Vector3d point(x,y,z);
 
             pointcloud.push_back(point);
         }
-
-
     return pointcloud;
 }
 
@@ -679,10 +485,14 @@ std::vector<Eigen::Vector3d> Map::compare_elevation(cv::Mat result_mat, std::vec
     std::string median = "median "+name;
     cv::imshow(median, elevation_mat);
     if(name=="each_frame" || name=="test") {
-        cv::erode(elevation_mat,elevation_mat,cv::Mat());
         //cv::erode(elevation_mat,elevation_mat,cv::Mat());
-        std::string erode = "erode "+name;
-        cv::imshow(erode, elevation_mat);
+        //std::string erode = "erode "+name;
+        //cv::imshow(erode, elevation_mat);
+        cv::Mat element5(5,5,CV_8U,cv::Scalar(1));
+        cv::Mat opened;
+        cv::morphologyEx(elevation_mat,elevation_mat,cv::MORPH_OPEN,element5);
+        std::string open = "open "+name;
+        cv::imshow(open, elevation_mat);
     }
 
     cv::waitKey(10);
@@ -806,6 +616,7 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
     //elevation_mat = cv::Scalar(254);
 
     cv::Mat elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+    cv::Mat binary_mat = cv::Mat::zeros((int)height,(int)width,CV_8U);
 
     for(const auto& p: pointcloud) {
     //     if(isinf(min_x) || isinf(min_y) || isinf(min_z)) continue;
@@ -857,45 +668,102 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
         // std::cout << "  (int)((p[1]-min_y)*10.0) = " << (int)((p[1]-min_y)*10.0) << std::endl;
         // std::cout << "elevation_mat.at<int>((int)z,(int)x) :" << elevation_mat.at<int>((int)z,(int)x) << std::endl;
 
-        if(f_z == 0.0 && p[2] != min_z )  {
-            std::cout << "  p[2] = " << p[2] << std::endl;
-            std::cout << "z = " << z << std::endl;
-            std::cout << "  min_z = " << min_z << std::endl;
+        // if(f_z == 0.0 && p[2] != min_z )  {
+        //     std::cout << "  p[2] = " << p[2] << std::endl;
+        //     std::cout << "z = " << z << std::endl;
+        //     std::cout << "  min_z = " << min_z << std::endl;
             
-        }
+        // }
 
         if(elevation_mat.at<float>((int)y,(int)x) < f_z) {
             elevation_mat.at<float>((int)y,(int)x) = f_z;
-
-    //         //elevated_pointcloud.insert(elevated_pointcloud.begin()+((int)((width*z)+x)),p);
+            
         }
     }
-     
+
+
     
+    //cv::imshow(name, elevation_mat);
+    //cv::imwrite( "elevation_image.jpg", elevation_mat);
+    //cv::imshow("binaty_mat", binary_mat);
     
-    
-    cv::imshow(name, elevation_mat);
 
 
     if(name=="each_frame") {
 
+
+
+        for(int y=0; y<(int)height; y++) {
+            for(int x=0; x<(int)width; x++) {
+                if(elevation_mat.at<float>((int)y,(int)x) != 0.0) {
+                    binary_mat.at<uchar>((int)y,(int)x) = 255;
+                }
+            }
+        }
+        //cv::imwrite( "binary_image.jpg", binary_mat);
+        //cv::imshow("binary_mat", binary_mat);
+
+        // cv::erode(elevation_mat,elevation_mat,cv::Mat());
+        // std::string erode = "erode "+name;
+        // cv::imshow(erode, elevation_mat);
+
+        cv::erode(binary_mat,binary_mat,cv::Mat());
+        std::string erode_binary = "erode binary "+name;
+        //cv::imshow(erode_binary, binary_mat);
+        //cv::imwrite( "erode_binary_image.jpg", binary_mat);
+
+
+        for(int y=0; y<(int)height; y++) {
+            for(int x=0; x<(int)width; x++) {
+                if(binary_mat.at<uchar>((int)y,(int)x) == 0) {
+                    elevation_mat.at<float>((int)y,(int)x) = 0.0;
+                }
+            }
+        }
+        //cv::imwrite( "erode_elevation_image.jpg", elevation_mat);
+        //std::string erode = "erode "+name;
+        //cv::imshow(erode, elevation_mat);
+
         cv::medianBlur(elevation_mat, elevation_mat, 3);
         std::string median = "median "+name;
-        cv::imshow(median, elevation_mat);
+        //cv::imshow(median, elevation_mat);
+        //cv::imwrite( "median_elevation_image.jpg", elevation_mat);
 
-        cv::erode(elevation_mat,elevation_mat,cv::Mat());
-        std::string erode = "erode "+name;
-        cv::imshow(erode, elevation_mat);
 
+        // cv::Mat element5(5,5,CV_8U,cv::Scalar(1));
+        // cv::Mat opened;
+        // cv::morphologyEx(elevation_mat,elevation_mat,cv::MORPH_OPEN,element5);
+        // std::string open = "open "+name;
+        // cv::imshow(open, elevation_mat);
 
 
 
     }
     else if(name=="filtered_frame") {
 
+        // for(int y=0; y<(int)height; y++) {
+        //     for(int x=0; x<(int)width; x++) {
+        //         if(elevation_mat.at<float>((int)y,(int)x) != 0.0) {
+        //             binary_mat.at<uchar>((int)y,(int)x) = 255;
+        //         }
+        //     }
+        // }
+
+        // cv::erode(binary_mat,binary_mat,cv::Mat());
+        // std::string erode = "erode "+name;
+        // cv::imshow(erode, binary_mat);
+
+        // for(int y=0; y<(int)height; y++) {
+        //     for(int x=0; x<(int)width; x++) {
+        //         if(binary_mat.at<uchar>((int)y,(int)x) == 0) {
+        //             elevation_mat.at<float>((int)y,(int)x) = 0.0;
+        //         }
+        //     }
+        // }
+
         cv::medianBlur(elevation_mat, elevation_mat, 3);
-        std::string median = "median "+name;
-        cv::imshow(median, elevation_mat);
+        // std::string median = "median "+name;
+        // cv::imshow(median, elevation_mat);
 
         // cv::erode(elevation_mat,elevation_mat,cv::Mat());
         // std::string erode = "erode "+name;
@@ -931,6 +799,9 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
     // std::string clahe_name = "clahe "+name;
     // cv::imshow(clahe_name, dst);
 
+    std::string result = "result "+name;
+    cv::imshow(result, elevation_mat);
+
     cv::waitKey(10);
     
     
@@ -949,6 +820,8 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
             // std::cout << "  pc_y = " << pc_y << std::endl;
             // std::cout << "  pc_z = " << pc_z << std::endl;
 
+            if(pc_z < -0.5) continue;
+            if(pc_z < -0.1) pc_z = -0.1;
             Eigen::Vector3d point(pc_x,pc_y,pc_z);
             elevated_pointcloud.push_back(point);
         }

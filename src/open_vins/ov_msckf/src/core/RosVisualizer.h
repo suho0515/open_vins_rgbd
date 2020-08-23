@@ -102,6 +102,8 @@ namespace ov_msckf {
 
         void publish_aligned_pointcloud();
 
+        void publish_filtered_pointcloud();
+
         /// Publish result point cloud from depth
         void publish_result_pointcloud();
 
@@ -134,6 +136,7 @@ namespace ov_msckf {
         ros::Publisher pub_tracks;
         ros::Publisher pub_pointcloud;
         ros::Publisher pub_aligned_pointcloud;
+        ros::Publisher pub_filtered_pointcloud;
         ros::Publisher pub_result_pointcloud;
         tf::TransformBroadcaster *mTfBr;
 

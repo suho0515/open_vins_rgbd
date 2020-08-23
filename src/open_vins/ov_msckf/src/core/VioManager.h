@@ -230,6 +230,10 @@ namespace ov_msckf {
             return aligned_pc;
         }
 
+        std::vector<Eigen::Vector3d> get_filtered_pc() {
+            return filtered_pc;
+        }
+
         /// Returns 3d ARUCO features in the global frame
         std::vector<Eigen::Vector3d> get_features_ARUCO() {
             std::vector<Eigen::Vector3d> aruco_feats;
@@ -318,7 +322,7 @@ namespace ov_msckf {
 
         // Timing statistic file and variables
         std::ofstream of_statistics;
-        boost::posix_time::ptime rT1, rT2, rT3, rT4, rT5, rT6, rT7, rT8, rT9;
+        boost::posix_time::ptime rT1, rT2, rT3, rT4, rT5, rT6, rT7, rT8, rT9, rT10, rT11;
 
         // Track how much distance we have traveled
         double timelastupdate = -1;

@@ -194,18 +194,12 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
     // Start timing
     rT8 =  boost::posix_time::microsec_clock::local_time();
 
-
-
-    
-
     // Feed our depth image
     map->feed_depth(octree, timestamp, depth_img, cam_id);
 
-
-    
-
     rT9 =  boost::posix_time::microsec_clock::local_time();
     
+    rT10 =  boost::posix_time::microsec_clock::local_time();
     //initialize point cloud according to initialized pose
     if(!is_initialized_vio) return;
     else {
@@ -213,7 +207,7 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
             last_pc = comput_global_pc();
             //last_pc = map->align_pointcloud(last_pc);
             //last_pc = pointcloud_filtering(octree,last_pc);
-            result_pc = last_pc;
+            //result_pc = last_pc;
             stored_pc = last_pc;
             return;
         }
@@ -228,177 +222,29 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
         stored_pc.push_back(p);
     }
 
-    while(stored_pc.size() > 10000) stored_pc.erase(stored_pc.begin());
-
-    filtered_pc = map->pointcloud_filtering(stored_pc,0.1);
-    aligned_pc = filtered_pc;
-
-
-    
-    
-
-    // arrangement pointcloud to make the same number of point
-    // while(pc.size() != last_pc.size())
-    // {
-    //     if(pc.size() > last_pc.size())
-    //     {
-    //         pc.pop_back();
-    //     }
-    //     else if(pc.size() < last_pc.size())
-    //     {
-    //         last_pc.pop_back();
-    //     }
-    // }
-
-    
-    // std::pair<Eigen::Matrix3d, Eigen::Vector3d> T = map->get_rigid_transform(pc,last_pc);
-    // Eigen::Matrix3d R = T.first;
-    // Eigen::Vector3d t = T.second;
-    // for(size_t i=0;i<pc.size();i++)
-    // {
-    //     pc[i] = R*pc[i] + t;
-    // }
-    // std::cout << "pc.size() : " << pc.size() << std::endl;
-    // std::cout << "last_pc.size() : " << last_pc.size() << std::endl;
-
-    // icp process
-    // https://github.com/zjudmd1015/icp/blob/master/icp.cpp
-//     Eigen::MatrixXd pc_matrix = Eigen::MatrixXd::Map(pc[0].data(),
-//  3, pc.size());
-//     Eigen::MatrixXd last_pc_matrix = Eigen::MatrixXd::Map(last_pc[0].data(),
-//  3, last_pc.size());
-//     //std::cout << "pc_matrix : " << pc_matrix << std::endl;
-    
-//     ICP_OUT icp_result=icp(pc_matrix.transpose(),last_pc_matrix.transpose(),20,0.000001);
-
-//     Eigen::Matrix3d R = icp_result.trans.block<3,3>(0,0);
-//     Eigen::Vector3d t = icp_result.trans.block<3,1>(0,3);
-//     for(size_t i=0;i<pc.size();i++)
-//     {
-//         pc[i] = R.transpose()*pc[i] + t;
-//     }
-
-    // std::vector<float> dist = icp_result.distances;
-    // float mean = std::accumulate(dist.begin(),dist.end(),0.0)/dist.size();
-    // std::cout << "mean error is " << mean - 6 << std::endl << std::endl;
-    
-    
-    // the sequent point cloud have a error cause estimated state is wrong.
-    // in that situation, what would be best choice to correct error?...
-
-    // for(const auto& p: pc) {
-    //     //if(isinf(p[0]) || isinf(p[1]) || isinf(p[2])
-    //     //    || fabs(p[0]) > 100.0 || fabs(p[1]) > 100.0 || fabs(p[2]) > 100.0) {
-    //         std::cout << "  p[0] = " << p[0] << "  p[1] = " << p[1] << "  p[2] = " << p[2] << std::endl;
-    //     //}
-    // }
-
-
-
+    int stored_value = 10000;
+    while(stored_pc.size() > stored_value) stored_pc.erase(stored_pc.begin());
+    if(stored_pc.size() < stored_value) return;
+    aligned_pc = map->pointcloud_filtering(stored_pc,0.1);
+    std::cout << "aligned_pc.size()" << aligned_pc.size() << std::endl;
     //cv::Mat elevation_mat = map->pointcloud_to_mat(result_pc,"result_frame_2");
-    
 
-    // float sum = 0.0;
-    // int cnt_same = 0;
-    // float mean = 0.0;
-    // for(const auto& p_1: pc) {
-    //     for(const auto& p_2: result_pc) {
-    //         if(p_1[0] == p_2[0] && p_1[1] == p_2[1] && p_2[2] < 0.1 ) {
-    //             //std::cout << "p_1[2] : " << p_1[2] << ", " << "p_2[2] : " << p_2[2] << std::endl;
-    //             //std::cout << "std::fabs(p_2[2]-p_1[2]) : " << std::fabs(p_2[2]-p_1[2]) << std::endl;
-    //             sum += std::fabs(p_2[2]-p_1[2]);
-                
-    //             cnt_same++;
-    //         }
-    //     }
-    // }
-    // //std::cout << "sum : " << sum << std::endl;
-    // mean = sum / (float)cnt_same;
-    // int avg = (int)(mean / 0.1);
-    // std::cout << "mean : " << mean << std::endl;
-    // std::cout << "avg : " << avg << std::endl;
-    // if(mean > 0.05) {
-        
-    //     int i = 0;
-    //     for(const auto& p: pc) {
-    //         Eigen::Vector3d new_p(p[0], p[1], p[2]-(0.1*(float)avg));
-    //         pc[i] = new_p;
-    //         i++;
-    //     }
-    // }
-
-
- 
-
-    // Eigen::Matrix<double,16,1> imu_x = state->_imu->value();
-    // Eigen::Vector3d new_p(state->_imu->pos()[0], state->_imu->pos()[1], state->_imu->pos()[2]+compensate_z);
-    // imu_x.block(4,0,3,1) = new_p;
-
-    // state->_imu->set_value(imu_x);
-
-    //result_pc = map->compare_elevation(result_pc,"test", filtered_pc);
-
-    filtered_pc = map->get_elevation(filtered_pc,"filtered_frame");
+    filtered_pc = map->get_elevation(aligned_pc,"filtered_frame");
+    std::cout << "filtered_pc.size()" << filtered_pc.size() << std::endl;
 
     for(const auto& p: filtered_pc) {
         result_pc.push_back(p);
     }
     last_pc = pc;
-    std::cout << "stored_pc.size()" << stored_pc.size() << std::endl;
-    std::cout << "result_pc.size()" << result_pc.size() << std::endl;
-
-    // compare elevation
-    // ------------------------------
-    //cv::Mat result_mat;
-    //result_mat = map->pointcloud_to_mat(result_pc,"result");
-
-    //result_pc = map->compare_elevation(result_mat, result_pc,"test", filtered_pc);
-    // ------------------------------
-    //result_pc = map->pointcloud_filtering(result_pc,0.1);
-
-    //Eigen::Vector3d zero_vec(0.0,0.0,0.0);
-    //result_pc.erase(std::remove(result_pc.begin(),result_pc.end(),zero_vec),result_pc.end());
-    
-    // bool _predicate(const Eigen::Vector3d& p) {
-    //     return ((p[0]>=0.0 && p[0] < 0.05) || (p[1]>=0.0 && p[1] < 0.05) || (p[2]>=0.0 && p[2] < 0.05)
-    //             || (p[0]<0.0 && p[0] < -10.0) || (p[1]<0.0 && p[1] < -10.0) || (p[2]<0.0 && p[2] < -10.0)); 
-    // }
-    // result_pc.erase(std::remove_if(result_pc.begin(), result_pc.end(), _predicate), result_pc.end());
-    
-    // std::vector<Eigen::Vector3d>::iterator it = result_pc.begin();
-    // while(it != result_pc.end()) {
-    //     if(((*it)[0]>=0.0 && (*it)[0] < 0.05) || ((*it)[1]>=0.0 && (*it)[1] < 0.05) || ((*it)[2]>=0.0 && (*it)[2] < 0.05)
-    //         || ((*it)[0]<0.0 && (*it)[0] < -10.0) || ((*it)[1]<0.0 && (*it)[1] < -10.0) || ((*it)[2]<0.0 && (*it)[2] < -10.0)
-    //         || ((*it)[0]>=0.0 && (*it)[0] > 10.0) || ((*it)[1]>=0.0 && (*it)[1] > 10.0) || ((*it)[2]>=0.0 && (*it)[2] > 10.0))
-    //         it = result_pc.erase(it);
-    //     else
-    //         ++it;
-    // }
-    
-
-
-
+    //std::cout << "result_pc.size()" << result_pc.size() << std::endl;
 
     //result_pc = map->pointcloud_to_mat(result_pc);
+
+    // elevation to result 
+    // ====================================================
     result_pc = map->get_elevation(result_pc,"result_map");
-    
-    // for(const auto& p: result_pc) {
-    //     if(isinf(p[0]) || isinf(p[1]) || isinf(p[2])
-    //         || fabs(p[0]) > 100.0 || fabs(p[1]) > 100.0 || fabs(p[2]) > 100.0
-    //         || p[0] == 0 || p[1] == 0 || p[2] == 0) {
-    //         std::cout << "  p[0] = " << p[0] << "  p[1] = " << p[1] << "  p[2] = " << p[2] << std::endl;
-    //     }
-    // }
-
-    // registration of two point cloud ( last point cloud and present point cloud)
-
-
-
-
-    // Call on our propagate and update function
-    //do_feature_propagate_update(timestamp);
-
-
+    // ====================================================
+    rT11 =  boost::posix_time::microsec_clock::local_time();
 }
 
 
@@ -866,16 +712,18 @@ void VioManager::do_feature_propagate_update(double timestamp) {
     // Get timing statitics information
     double time_track = (rT2-rT1).total_microseconds() * 1e-6;
     double time_depth = (rT9-rT8).total_microseconds() * 1e-6;
+    double time_mapping = (rT11-rT10).total_microseconds() * 1e-6;
     double time_prop = (rT3-rT2).total_microseconds() * 1e-6;
     double time_msckf = (rT4-rT3).total_microseconds() * 1e-6;
     double time_slam_update = (rT5-rT4).total_microseconds() * 1e-6;
     double time_slam_delay = (rT6-rT5).total_microseconds() * 1e-6;
     double time_marg = (rT7-rT6).total_microseconds() * 1e-6;
-    double time_total = (rT7-rT1).total_microseconds() * 1e-6;
+    double time_total = (rT11-rT1).total_microseconds() * 1e-6;
 
     // Timing information
     printf(BLUE "[TIME]: %.4f seconds for tracking\n" RESET, time_track);
     printf(BLUE "[TIME]: %.4f seconds for depth\n" RESET, time_depth);
+    printf(BLUE "[TIME]: %.4f seconds for mapping\n" RESET, time_mapping);
     printf(BLUE "[TIME]: %.4f seconds for propagation\n" RESET, time_prop);
     printf(BLUE "[TIME]: %.4f seconds for MSCKF update (%d features)\n" RESET, time_msckf, (int)featsup_MSCKF.size());
     if(state->_options.max_slam_features > 0) {
