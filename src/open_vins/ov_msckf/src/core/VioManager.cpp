@@ -204,20 +204,23 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
     if(!is_initialized_vio) return;
     else {
         if(!is_initialized_pc) {
-            last_pc = comput_global_pc();
+            stored_pc = comput_global_pc();
             //last_pc = map->align_pointcloud(last_pc);
             //last_pc = pointcloud_filtering(octree,last_pc);
             //result_pc = last_pc;
-            stored_pc = last_pc;
+            //stored_pc = last_pc;
+            stored_pc = map->get_elevation(stored_pc,"each_frame");
+            is_initialized_pc = true;
             return;
         }
     }
 
-    std::vector<Eigen::Vector3d> pc = comput_global_pc();
+    pc = comput_global_pc();
+    elevation_pc = map->get_elevation(pc,"each_frame");
     //pc = map->align_pointcloud(pc);
 
     // keep store original point cloud (of coures each pc is filtered at first)
-    for(const auto& p: pc)
+    for(const auto& p: elevation_pc)
     {
         stored_pc.push_back(p);
     }
@@ -226,7 +229,7 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
     while(stored_pc.size() > stored_value) stored_pc.erase(stored_pc.begin());
     if(stored_pc.size() < stored_value) return;
     aligned_pc = map->pointcloud_filtering(stored_pc,0.1);
-    std::cout << "aligned_pc.size()" << aligned_pc.size() << std::endl;
+    //std::cout << "aligned_pc.size()" << aligned_pc.size() << std::endl;
     //cv::Mat elevation_mat = map->pointcloud_to_mat(result_pc,"result_frame_2");
 
     filtered_pc = map->get_elevation(aligned_pc,"filtered_frame");
@@ -235,7 +238,7 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
     for(const auto& p: filtered_pc) {
         result_pc.push_back(p);
     }
-    last_pc = pc;
+    //last_pc = pc;
     //std::cout << "result_pc.size()" << result_pc.size() << std::endl;
 
     //result_pc = map->pointcloud_to_mat(result_pc);
@@ -413,9 +416,7 @@ std::vector<Eigen::Vector3d> VioManager::comput_global_pc()
         //std::cout << "affined_pc[0] :" << affined_pc[0] << "affined_pc[1] :" << affined_pc[1] << "affined_pc[2] :" << affined_pc[2] << std::endl; 
     }
 
-    is_initialized_pc = true;
-
-    map->set_pointcloud(affined_pc);
+    //map->set_pointcloud(affined_pc);
 
     return affined_pc;
 }

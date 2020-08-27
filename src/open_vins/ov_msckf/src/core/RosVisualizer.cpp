@@ -54,6 +54,9 @@ RosVisualizer::RosVisualizer(ros::NodeHandle &nh, VioManager* app, Simulator *si
     pub_pointcloud = nh.advertise<sensor_msgs::PointCloud2>("/ov_msckf/pointcloud", 2);
     ROS_INFO("Publishing: %s", pub_pointcloud.getTopic().c_str());
 
+    pub_elevation_pointcloud = nh.advertise<sensor_msgs::PointCloud2>("/ov_msckf/elevation_pointcloud", 2);
+    ROS_INFO("Publishing: %s", pub_elevation_pointcloud.getTopic().c_str());
+
     pub_aligned_pointcloud = nh.advertise<sensor_msgs::PointCloud2>("/ov_msckf/aligned_pointcloud", 2);
     ROS_INFO("Publishing: %s", pub_aligned_pointcloud.getTopic().c_str());
 
@@ -68,6 +71,24 @@ RosVisualizer::RosVisualizer(ros::NodeHandle &nh, VioManager* app, Simulator *si
     // Our tracking image
     pub_tracks = nh.advertise<sensor_msgs::Image>("/ov_msckf/trackhist", 2);
     ROS_INFO("Publishing: %s", pub_tracks.getTopic().c_str());
+
+    pub_elevation_image = nh.advertise<sensor_msgs::Image>("/ov_msckf/elevation_image", 2);
+    ROS_INFO("Publishing: %s", pub_elevation_image.getTopic().c_str());
+
+    pub_binary_image = nh.advertise<sensor_msgs::Image>("/ov_msckf/binary_image", 2);
+    ROS_INFO("Publishing: %s", pub_binary_image.getTopic().c_str());
+
+    pub_erode_binary_image = nh.advertise<sensor_msgs::Image>("/ov_msckf/erode_binary_image", 2);
+    ROS_INFO("Publishing: %s", pub_erode_binary_image.getTopic().c_str());
+
+    pub_erode_elevation_image = nh.advertise<sensor_msgs::Image>("/ov_msckf/erode_elevation_image", 2);
+    ROS_INFO("Publishing: %s", pub_erode_elevation_image.getTopic().c_str());
+
+    pub_median_elevation_image = nh.advertise<sensor_msgs::Image>("/ov_msckf/median_elevation_image", 2);
+    ROS_INFO("Publishing: %s", pub_median_elevation_image.getTopic().c_str());
+
+    pub_result_image = nh.advertise<sensor_msgs::Image>("/ov_msckf/result_image", 2);
+    ROS_INFO("Publishing: %s", pub_result_image.getTopic().c_str());
 
     // Groundtruth publishers
     pub_posegt = nh.advertise<geometry_msgs::PoseStamped>("/ov_msckf/posegt", 2);
@@ -126,9 +147,26 @@ void RosVisualizer::visualize() {
     // publish current image
     publish_images();
 
+    // publish_elevation_image();
+    // publish_binary_image();
+    // publish_erode_binary_image();
+    // publish_erode_elevation_image();
+    // publish_median_elevation_image();
+    publish_result_image();
+        // Check if we have subscribers
+    if(_app->get_is_initialized_pc()) {
+        // Get our map instance
+        Map *map = _app->get_map();
+        map->clear_memory();
+    }
+
+
+
     // 20200512, edited by suho 
     // publish point cloud
     publish_pointcloud();
+
+    publish_elevation_pointcloud();
 
     publish_aligned_pointcloud();
 
@@ -409,9 +447,158 @@ void RosVisualizer::publish_images() {
 
     // Publish
     pub_tracks.publish(exl_msg);
-
+    
 }
 
+void RosVisualizer::publish_elevation_image() {
+
+    // Check if we have subscribers
+    if(!_app->get_is_initialized_pc())
+        return;
+
+    // Get our map instance
+    Map *map = _app->get_map();
+    cv::Mat img = map->get_elevation_image();
+
+    // Create our message
+    std_msgs::Header header;
+    header.stamp = ros::Time::now();
+    // sensor_msgs::ImagePtr exl_msg = cv_bridge::CvImage(header, "mono16", img).toImageMsg();
+
+    cv_bridge::CvImage out_msg;
+    out_msg.header   = header;
+    out_msg.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+    out_msg.image    = img;
+
+    // Publish
+    pub_elevation_image.publish(out_msg.toImageMsg());
+    img.release();
+}
+
+void RosVisualizer::publish_binary_image() {
+
+    // Check if we have subscribers
+    if(!_app->get_is_initialized_pc())
+        return;
+
+    // Get our map instance
+    Map *map = _app->get_map();
+    cv::Mat img = map->get_binary_image();
+
+    // Create our message
+    std_msgs::Header header;
+    header.stamp = ros::Time::now();
+    // sensor_msgs::ImagePtr exl_msg = cv_bridge::CvImage(header, "mono16", img).toImageMsg();
+
+    cv_bridge::CvImage out_msg;
+    out_msg.header   = header;
+    out_msg.encoding = sensor_msgs::image_encodings::TYPE_8UC1;
+    out_msg.image    = img;
+
+    // Publish
+    pub_binary_image.publish(out_msg.toImageMsg());
+    img.release();
+}
+
+void RosVisualizer::publish_erode_binary_image() {
+
+    // Check if we have subscribers
+    if(!_app->get_is_initialized_pc())
+        return;
+
+    // Get our map instance
+    Map *map = _app->get_map();
+    cv::Mat img = map->get_erode_binary_image();
+
+    // Create our message
+    std_msgs::Header header;
+    header.stamp = ros::Time::now();
+    // sensor_msgs::ImagePtr exl_msg = cv_bridge::CvImage(header, "mono16", img).toImageMsg();
+
+    cv_bridge::CvImage out_msg;
+    out_msg.header   = header;
+    out_msg.encoding = sensor_msgs::image_encodings::TYPE_8UC1;
+    out_msg.image    = img;
+
+    // Publish
+    pub_erode_binary_image.publish(out_msg.toImageMsg());
+    img.release();
+}
+
+void RosVisualizer::publish_erode_elevation_image() {
+
+    // Check if we have subscribers
+    if(!_app->get_is_initialized_pc())
+        return;
+
+    // Get our map instance
+    Map *map = _app->get_map();
+    cv::Mat img = map->get_erode_elevation_image();
+
+    // Create our message
+    std_msgs::Header header;
+    header.stamp = ros::Time::now();
+    // sensor_msgs::ImagePtr exl_msg = cv_bridge::CvImage(header, "mono16", img).toImageMsg();
+
+    cv_bridge::CvImage out_msg;
+    out_msg.header   = header;
+    out_msg.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+    out_msg.image    = img;
+
+    // Publish
+    pub_erode_elevation_image.publish(out_msg.toImageMsg());
+    img.release();
+}
+
+void RosVisualizer::publish_median_elevation_image() {
+
+    // Check if we have subscribers
+    if(!_app->get_is_initialized_pc())
+        return;
+
+    // Get our map instance
+    Map *map = _app->get_map();
+    cv::Mat img = map->get_median_elevation_image();
+
+    // Create our message
+    std_msgs::Header header;
+    header.stamp = ros::Time::now();
+    // sensor_msgs::ImagePtr exl_msg = cv_bridge::CvImage(header, "mono16", img).toImageMsg();
+
+    cv_bridge::CvImage out_msg;
+    out_msg.header   = header;
+    out_msg.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+    out_msg.image    = img;
+
+    // Publish
+    pub_median_elevation_image.publish(out_msg.toImageMsg());
+    img.release();
+}
+
+void RosVisualizer::publish_result_image() {
+
+    // Check if we have subscribers
+    if(!_app->get_is_initialized_pc())
+        return;
+
+    // Get our map instance
+    Map *map = _app->get_map();
+    cv::Mat img = map->get_result_image();
+
+    // Create our message
+    std_msgs::Header header;
+    header.stamp = ros::Time::now();
+    // sensor_msgs::ImagePtr exl_msg = cv_bridge::CvImage(header, "mono16", img).toImageMsg();
+
+    cv_bridge::CvImage out_msg;
+    out_msg.header   = header;
+    out_msg.encoding = sensor_msgs::image_encodings::TYPE_32FC1;
+    out_msg.image    = img;
+
+    // Publish
+    pub_result_image.publish(out_msg.toImageMsg());
+    img.release();
+}
 
 //20200512, edited by suho
 // publish pointcloud from depth image
@@ -421,10 +608,7 @@ void RosVisualizer::publish_pointcloud() {
     if(pub_tracks.getNumSubscribers()==0 || poses_imu.size() < 1)
         return;
 
-    // Get our good features
-    Map *map = _app->get_map();
-
-    std::vector<Eigen::Vector3d> pointcloud = map->get_pointcloud();
+    std::vector<Eigen::Vector3d> pointcloud = _app->get_pc();
 
     // Declare message and sizes
     sensor_msgs::PointCloud2 cloud;
@@ -458,7 +642,48 @@ void RosVisualizer::publish_pointcloud() {
 
     // Publish
     pub_pointcloud.publish(cloud);
+}
 
+void RosVisualizer::publish_elevation_pointcloud() {
+
+    // Check if we have subscribers
+    if(pub_tracks.getNumSubscribers()==0 || poses_imu.size() < 1)
+        return;
+
+    std::vector<Eigen::Vector3d> pointcloud = _app->get_elevation_pc();
+
+    // Declare message and sizes
+    sensor_msgs::PointCloud2 cloud;
+    cloud.header.frame_id = "global";
+    cloud.header.stamp = ros::Time::now();
+    cloud.width  = 3*pointcloud.size();
+    cloud.height = 1;
+    cloud.is_bigendian = false;
+    cloud.is_dense = false; // there may be invalid points
+
+    // Setup pointcloud fields
+    sensor_msgs::PointCloud2Modifier modifier(cloud);
+    modifier.setPointCloud2FieldsByString(1,"xyz");
+    modifier.resize(3*pointcloud.size());
+
+    // Iterators
+    sensor_msgs::PointCloud2Iterator<float> out_x(cloud, "x");
+    sensor_msgs::PointCloud2Iterator<float> out_y(cloud, "y");
+    sensor_msgs::PointCloud2Iterator<float> out_z(cloud, "z");
+
+    for (const auto &pt : pointcloud)
+    {
+
+        *out_x = pt(0);
+        ++out_x;
+        *out_y = pt(1);
+        ++out_y;
+        *out_z = pt(2);
+        ++out_z;
+    }
+
+    // Publish
+    pub_elevation_pointcloud.publish(cloud);
 }
 
 void RosVisualizer::publish_aligned_pointcloud() {

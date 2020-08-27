@@ -221,6 +221,12 @@ namespace ov_msckf {
         }
 
         /// 20200722, edited by suho
+        std::vector<Eigen::Vector3d> get_pc() {
+            return pc;
+        }
+        std::vector<Eigen::Vector3d> get_elevation_pc() {
+            return elevation_pc;
+        }
         /// return result point cloud
         std::vector<Eigen::Vector3d> get_result_pc() {
             return result_pc;
@@ -232,6 +238,10 @@ namespace ov_msckf {
 
         std::vector<Eigen::Vector3d> get_filtered_pc() {
             return filtered_pc;
+        }
+
+        bool get_is_initialized_pc() {
+            return is_initialized_pc;
         }
 
         /// Returns 3d ARUCO features in the global frame
@@ -341,6 +351,9 @@ namespace ov_msckf {
 
         /// Boolean if we are initialized point cloud or not
         bool is_initialized_pc = false;
+
+        std::vector<Eigen::Vector3d> pc;
+        std::vector<Eigen::Vector3d> elevation_pc;
 
         /// last point cloud data
         std::vector<Eigen::Vector3d> last_pc;

@@ -97,8 +97,17 @@ namespace ov_msckf {
         /// Publish the active tracking image
         void publish_images();
 
+        void publish_elevation_image();
+        void publish_binary_image();
+        void publish_erode_binary_image();
+        void publish_erode_elevation_image();
+        void publish_median_elevation_image();
+        void publish_result_image();
+
         /// Publish point cloud from depth
         void publish_pointcloud();
+
+        void publish_elevation_pointcloud();
 
         void publish_aligned_pointcloud();
 
@@ -134,7 +143,14 @@ namespace ov_msckf {
         ros::Publisher pub_points_aruco;
         ros::Publisher pub_points_sim;
         ros::Publisher pub_tracks;
+        ros::Publisher pub_elevation_image;
+        ros::Publisher pub_binary_image;
+        ros::Publisher pub_erode_binary_image;
+        ros::Publisher pub_erode_elevation_image;
+        ros::Publisher pub_median_elevation_image;
+        ros::Publisher pub_result_image;
         ros::Publisher pub_pointcloud;
+        ros::Publisher pub_elevation_pointcloud;
         ros::Publisher pub_aligned_pointcloud;
         ros::Publisher pub_filtered_pointcloud;
         ros::Publisher pub_result_pointcloud;

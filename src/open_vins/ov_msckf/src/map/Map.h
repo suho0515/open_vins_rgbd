@@ -158,7 +158,26 @@ namespace ov_msckf {
          */
         std::vector<Eigen::Vector3d> align_pointcloud(std::vector<Eigen::Vector3d> &pointcloud);
 
-        
+        cv::Mat get_elevation_image() {
+            return elevation_mat;
+        }
+        cv::Mat get_binary_image() {
+            return binary_mat;
+        }
+        cv::Mat get_erode_binary_image() {
+            return erode_binary_mat;
+        }
+        cv::Mat get_erode_elevation_image() {
+            return erode_elevation_mat;
+        }
+        cv::Mat get_median_elevation_image() {
+            return median_elevation_mat;
+        }
+        cv::Mat get_result_image() {
+            return result_mat;
+        }
+
+        void clear_memory();
     protected:
 
         /**
@@ -222,6 +241,13 @@ namespace ov_msckf {
         std::vector<cv::Mat> last_imgpyr;
 
         bool elevate_minmax_initialize_flag = false;
+
+        cv::Mat elevation_mat;
+        cv::Mat binary_mat;
+        cv::Mat erode_binary_mat;
+        cv::Mat erode_elevation_mat;
+        cv::Mat median_elevation_mat;
+        cv::Mat result_mat;
 
     };
 

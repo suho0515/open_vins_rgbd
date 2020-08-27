@@ -84,7 +84,7 @@ void Map::feed_depth(octomap::OcTree octree, double timestamp, cv::Mat &depth_im
     //pointcloud = pointcloud_to_mat(pointcloud);
     
     // elevation pointcloud
-    pointcloud = elevation(pointcloud,"each_frame");
+    //pointcloud = elevation(pointcloud,"each_frame");
     //std::cout << "pointcloud.size() : " << pointcloud.size() << std::endl; 
 
 
@@ -173,7 +173,7 @@ std::vector<Eigen::Vector3d> Map::depth_to_pointcloud(cv::Mat &depth_img) {
             // if depth is too far, it could be very noisy.
             // too solve that issue, i limit depth to 5000
             if (d == 0) continue;
-            if (d > 5000) continue;
+            if (d > 4000) continue;
                      
             // Calculate the spatial coordinates of this point
             float z = double (d) / 1000; // 1000 is camera factor
@@ -615,8 +615,10 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
     //cv::Mat elevation_mat((int)height,(int)width,CV_8U);
     //elevation_mat = cv::Scalar(254);
 
-    cv::Mat elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
-    cv::Mat binary_mat = cv::Mat::zeros((int)height,(int)width,CV_8U);
+    cv::Mat tmp_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+
+
+
 
     for(const auto& p: pointcloud) {
     //     if(isinf(min_x) || isinf(min_y) || isinf(min_z)) continue;
@@ -675,8 +677,8 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
             
         // }
 
-        if(elevation_mat.at<float>((int)y,(int)x) < f_z) {
-            elevation_mat.at<float>((int)y,(int)x) = f_z;
+        if(tmp_mat.at<float>((int)y,(int)x) < f_z) {
+            tmp_mat.at<float>((int)y,(int)x) = f_z;
             
         }
     }
@@ -684,13 +686,19 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
 
     
     //cv::imshow(name, elevation_mat);
-    //cv::imwrite( "elevation_image.jpg", elevation_mat);
+    //cv::imwrite( "../01_elevation_image.bmp", elevation_mat);
     //cv::imshow("binaty_mat", binary_mat);
     
 
 
     if(name=="each_frame") {
+        elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+        binary_mat = cv::Mat::zeros((int)height,(int)width,CV_8U);
+        erode_binary_mat = cv::Mat::zeros((int)height,(int)width,CV_8U);
+        erode_elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+        median_elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);       
 
+        elevation_mat = tmp_mat;
 
 
         for(int y=0; y<(int)height; y++) {
@@ -700,34 +708,39 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
                 }
             }
         }
-        //cv::imwrite( "binary_image.jpg", binary_mat);
+        //cv::imwrite( "../02_binary_image.bmp", binary_mat);
         //cv::imshow("binary_mat", binary_mat);
 
         // cv::erode(elevation_mat,elevation_mat,cv::Mat());
         // std::string erode = "erode "+name;
         // cv::imshow(erode, elevation_mat);
 
-        cv::erode(binary_mat,binary_mat,cv::Mat());
-        std::string erode_binary = "erode binary "+name;
-        //cv::imshow(erode_binary, binary_mat);
-        //cv::imwrite( "erode_binary_image.jpg", binary_mat);
+        //cv::erode(binary_mat,binary_mat,cv::Mat());
+        cv::erode(binary_mat,erode_binary_mat,cv::Mat());
+        //std::string erode_binary = "erode binary "+name;
+        //cv::imshow(erode_binary, erode_binary_mat);
+        //cv::imwrite( "../03_erode_binary_image.bmp", binary_mat);
 
-
+        erode_elevation_mat = elevation_mat;
         for(int y=0; y<(int)height; y++) {
             for(int x=0; x<(int)width; x++) {
-                if(binary_mat.at<uchar>((int)y,(int)x) == 0) {
-                    elevation_mat.at<float>((int)y,(int)x) = 0.0;
+                if(erode_binary_mat.at<uchar>((int)y,(int)x) == 0) {
+                    erode_elevation_mat.at<float>((int)y,(int)x) = 0.0;
                 }
             }
         }
-        //cv::imwrite( "erode_elevation_image.jpg", elevation_mat);
+        //cv::imwrite( "../04_erode_elevation_image.bmp", elevation_mat);
         //std::string erode = "erode "+name;
-        //cv::imshow(erode, elevation_mat);
+        //cv::imshow(erode, erode_elevation_mat);
 
-        cv::medianBlur(elevation_mat, elevation_mat, 3);
-        std::string median = "median "+name;
+
+
+        cv::medianBlur(erode_elevation_mat, median_elevation_mat, 3);
+        //std::string median = "median "+name;
         //cv::imshow(median, elevation_mat);
-        //cv::imwrite( "median_elevation_image.jpg", elevation_mat);
+        //cv::imwrite( "../05_median_elevation_image.bmp", elevation_mat);
+
+
 
 
         // cv::Mat element5(5,5,CV_8U,cv::Scalar(1));
@@ -737,7 +750,7 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
         // cv::imshow(open, elevation_mat);
 
 
-
+        tmp_mat = median_elevation_mat;
     }
     else if(name=="filtered_frame") {
 
@@ -761,7 +774,10 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
         //     }
         // }
 
-        cv::medianBlur(elevation_mat, elevation_mat, 3);
+
+
+
+        //cv::medianBlur(elevation_mat, elevation_mat, 3);
         // std::string median = "median "+name;
         // cv::imshow(median, elevation_mat);
 
@@ -769,8 +785,18 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
         // std::string erode = "erode "+name;
         // cv::imshow(erode, elevation_mat);
 
+        cv::imshow("tmp_mat", tmp_mat);
+        cv::waitKey(10);
 
 
+
+    }
+    else if(name=="result_map") {
+        //std::string result = "result "+name;
+        //cv::imshow(result, elevation_mat);
+        //cv::imwrite( "../06_result_image.bmp", elevation_mat);
+        result_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+        result_mat = tmp_mat;
     }
 
 
@@ -799,10 +825,9 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
     // std::string clahe_name = "clahe "+name;
     // cv::imshow(clahe_name, dst);
 
-    std::string result = "result "+name;
-    cv::imshow(result, elevation_mat);
 
-    cv::waitKey(10);
+
+    //cv::waitKey(10);
     
     
 
@@ -810,11 +835,11 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
 
     for(int y=0; y<(int)height;y++) {
         for(int x=0; x<(int)width;x++) {
-            if(elevation_mat.at<float>(y,x)==0.0) continue;
+            if(tmp_mat.at<float>(y,x)==0.0) continue;
                     
             float pc_x = ((x+normalized_min_x)/10.0)-0.05;
             float pc_y = ((y+normalized_min_y)/10.0)-0.05;
-            float pc_z = ((elevation_mat.at<float>(y,x)/1.0)*dz)+min_z;
+            float pc_z = ((tmp_mat.at<float>(y,x)/1.0)*dz)+min_z;
 
             // std::cout << "  pc_x = " << pc_x << std::endl;
             // std::cout << "  pc_y = " << pc_y << std::endl;
@@ -827,7 +852,7 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
         }
     }
 
-    elevation_mat.release();
+    tmp_mat.release();
 
     return elevated_pointcloud;
 }
@@ -1039,4 +1064,14 @@ std::pair<Eigen::Matrix3d, Eigen::Vector3d> Map::computeRigidTransform(const std
 	Eigen::Vector3d t = center_dst - R*center_src;	
 	
 	return std::make_pair(R, t);
+}
+
+void Map::clear_memory () {
+    elevation_mat.release();
+    binary_mat.release();
+    erode_binary_mat.release();
+    erode_elevation_mat.release();
+    median_elevation_mat.release();
+    result_mat.release();
+    //tmp_mat.release();
 }
