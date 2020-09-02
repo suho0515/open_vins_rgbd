@@ -3,7 +3,8 @@
 
 open_vins_rgbd is modified version from open_vins.
 it can subscribe depth_image topic message and convert depth_image to point_cloud, also publish point_cloud topic to visualize using rviz.
-https://youtu.be/fXsHnaEWqr0
+  
+you can check out the result in here. https://youtu.be/fXsHnaEWqr0
 
 # pre-install
 octomap
