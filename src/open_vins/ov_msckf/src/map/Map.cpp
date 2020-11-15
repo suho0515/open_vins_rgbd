@@ -593,10 +593,13 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
     // to prevent edge issue, we add to residual number to dx
     // if resolution is 0.1, add 0.1 to dx. and multiply 100.0 to dx to make it intager.
     // if resolution is 0.05, add 0.05 to dx. and multiply 1000.0 to dx to make it integer.
-    int width = (int)((dx+0.05)*1000.0);
-    width = width - (width/10)*9;
-    int height = (int)((dy+0.05)*1000.0);
-    height = height - (height/10)*9;
+    // int width = (int)((dx+0.05)*1000.0);
+    // width = width - (width/10)*9;
+    // int height = (int)((dy+0.05)*1000.0);
+    // height = height - (height/10)*9;
+
+    int width = (int)(((dx+0.1)*100.0)/5.0);
+    int height = (int)(((dy+0.1)*100.0)/5.0);
 
     //std::cout << "  width = " << width << std::endl;
     //std::cout << "  height = " << height << std::endl;
