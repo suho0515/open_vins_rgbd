@@ -130,7 +130,7 @@ VioManager::VioManager(VioManagerOptions& params_) {
     // Map instance
     map = new Map();
     
-
+    last_imu.setZero();
 
 }
 
@@ -199,6 +199,10 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
 
     rT9 =  boost::posix_time::microsec_clock::local_time();
     
+
+    
+    
+
     rT10 =  boost::posix_time::microsec_clock::local_time();
     //initialize point cloud according to initialized pose
     if(!is_initialized_vio) return;
@@ -210,6 +214,7 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
             //result_pc = last_pc;
             //stored_pc = last_pc;
             stored_pc = map->get_elevation(stored_pc,"each_frame");
+            result_localization_pc = map->get_elevation(stored_pc,"localization_frame");
             is_initialized_pc = true;
             return;
         }
@@ -217,6 +222,8 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
 
     pc = comput_global_pc();
     elevation_pc = map->get_elevation(pc,"each_frame");
+    
+
     //pc = map->align_pointcloud(pc);
 
     // keep store original point cloud (of coures each pc is filtered at first)
@@ -228,7 +235,7 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
     int stored_value = 10000;
     while(stored_pc.size() > stored_value) stored_pc.erase(stored_pc.begin());
     if(stored_pc.size() < stored_value) return;
-    aligned_pc = map->pointcloud_filtering(stored_pc,0.1);
+    aligned_pc = map->pointcloud_filtering(stored_pc,0.05);
     //std::cout << "aligned_pc.size()" << aligned_pc.size() << std::endl;
     //cv::Mat elevation_mat = map->pointcloud_to_mat(result_pc,"result_frame_2");
 
@@ -239,7 +246,7 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
         result_pc.push_back(p);
     }
     //last_pc = pc;
-    //std::cout << "result_pc.size()" << result_pc.size() << std::endl;
+    
 
     //result_pc = map->pointcloud_to_mat(result_pc);
 
@@ -247,9 +254,53 @@ void VioManager::feed_measurement_depth(octomap::OcTree octree, double timestamp
     // ====================================================
     result_pc = map->get_elevation(result_pc,"result_map");
     // ====================================================
+    std::cout << "result_pc.size()" << result_pc.size() << std::endl;
+    
+    // save result pointcloud
+    
+    std::ofstream output_file("../result.txt");
+    for(const auto& p: result_pc) {
+        
+        std::string temp_str = to_string(p[0]);
+        output_file << temp_str << " ";
+
+        temp_str = to_string(p[1]);
+        output_file << temp_str << " ";
+
+        temp_str = to_string(p[2]);
+        output_file << temp_str << "\n";
+    }
+    output_file.close();
+
+
+
+    // for localization map
+    localization_pc = map->get_elevation(pc,"localization_frame");
+    if(localization_pc.size() > 0) { 
+        for(const auto& p: localization_pc)
+        {
+            result_localization_pc.push_back(p);
+        }
+        //result_localization_pc = map->get_localization_elevation(result_localization_pc,result_pc,"result_map");
+        result_localization_pc = map->get_elevation(result_localization_pc,"result_map");
+    }
+
+    std::ofstream output_file_2("../result_localization.txt");
+    for(const auto& p: result_localization_pc) {
+        
+        std::string temp_str = to_string(p[0]);
+        output_file_2 << temp_str << " ";
+
+        temp_str = to_string(p[1]);
+        output_file_2 << temp_str << " ";
+
+        temp_str = to_string(p[2]);
+        output_file_2 << temp_str << "\n";
+    }
+    output_file_2.close();
+    
     rT11 =  boost::posix_time::microsec_clock::local_time();
 }
-
 
 void VioManager::feed_measurement_stereo(double timestamp, cv::Mat& img0, cv::Mat& img1, size_t cam_id0, size_t cam_id1) {
 
@@ -285,6 +336,9 @@ void VioManager::feed_measurement_stereo(double timestamp, cv::Mat& img0, cv::Ma
         trackARUCO->feed_stereo(timestamp, img0, img1, cam_id0, cam_id1);
     }
     rT2 =  boost::posix_time::microsec_clock::local_time();
+
+
+
 
     // If we do not have VIO initialization, then try to initialize
     // TODO: Or if we are trying to reset the system, then do that here!
@@ -393,13 +447,13 @@ std::vector<Eigen::Vector3d> VioManager::comput_global_pc()
 
     // Color to Depth
     Eigen::Matrix<double, 3, 3> R_CtoD;
-    // R_CtoD <<   0.999995,        -0.00194712,      -0.00247722,    
-    //             0.00194194,       0.999996,        -0.00209038,    
-    //             0.00248128,       0.00208556,       0.999995;    
+     R_CtoD <<   0.999995,        -0.00194712,      -0.00247722,    
+                 0.00194194,       0.999996,        -0.00209038,    
+                 0.00248128,       0.00208556,       0.999995;    
 
-    R_CtoD <<   0.98480775301,        0.0,      -0.17364817766,    
-                0.0,       1.0,        0.0,    
-                0.17364817766,       0.0,       0.98480775301;    
+    //R_CtoD <<   0.98480775301,        0.0,      -0.17364817766,    
+    //            0.0,       1.0,        0.0,    
+    //            0.17364817766,       0.0,       0.98480775301;    
 
     std::vector<Eigen::Vector3d> pc = map->get_pointcloud();
     //std::cout << "pc.size() : "<< pc.size() << std::endl;
@@ -603,6 +657,7 @@ void VioManager::do_feature_propagate_update(double timestamp) {
     featsup_MSCKF.insert(featsup_MSCKF.end(), feats_marg.begin(), feats_marg.end());
     featsup_MSCKF.insert(featsup_MSCKF.end(), feats_maxtracks.begin(), feats_maxtracks.end());
 
+    
 
     //===================================================================================
     // Now that we have a list of features, lets do the EKF update for MSCKF and SLAM!
@@ -697,14 +752,28 @@ void VioManager::do_feature_propagate_update(double timestamp) {
     //===================================================================================
     // Can i do something here?
     //===================================================================================
-
-
-    Eigen::Matrix<double,16,1> imu_x = state->_imu->value();
-    Eigen::Vector3d new_p(state->_imu->pos()[0], state->_imu->pos()[1], state->_imu->pos()[2]);
-    imu_x.block(4,0,3,1) = new_p;
-
-    state->_imu->set_value(imu_x);
-    
+    //std::cout << "(int)featsup_MSCKF.size() : " << (int)featsup_MSCKF.size() << std::endl;
+    if((int)featsup_MSCKF.size() < 5) {
+        //is_initialized_vio = false;
+    //         if(!is_initialized_vio) {
+    //     is_initialized_vio = try_to_initialize();
+    //     if(!is_initialized_vio) return;
+    // }
+        // bool is_empty = last_imu.isZero(0);
+        // std::cout << "is_empty : " << is_empty << std::endl;
+        // if(is_empty) {
+        //     last_imu = state->_imu->value();
+        //     return;
+        // }
+        // else {
+        //     state->_imu->set_value(last_imu);
+        //     std::cout << "there are not enough features"<< std::endl;
+        //     return;
+        // }
+        //return;
+    }
+    //state->_imu->set_value(imu_x);
+    last_imu = state->_imu->value();
 
     //===================================================================================
     // Debug info, and stats tracking

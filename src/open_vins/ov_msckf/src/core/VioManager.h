@@ -35,6 +35,7 @@
 #include "init/InertialInitializer.h"
 #include "types/LandmarkRepresentation.h"
 #include "types/Landmark.h"
+#include "types/IMU.h"
 
 #include "state/Propagator.h"
 #include "state/State.h"
@@ -57,6 +58,7 @@
 #include <octomap/octomap.h>
 #include <octomap/OcTree.h>
 #include <octomap/OcTreeIterator.hxx>
+
 
 namespace ov_msckf {
 
@@ -240,6 +242,14 @@ namespace ov_msckf {
             return filtered_pc;
         }
 
+        std::vector<Eigen::Vector3d> get_localization_pc() {
+            return localization_pc;
+        }
+
+        std::vector<Eigen::Vector3d> get_result_localization_pc() {
+            return result_localization_pc;
+        }
+
         bool get_is_initialized_pc() {
             return is_initialized_pc;
         }
@@ -298,13 +308,15 @@ namespace ov_msckf {
 
         std::vector<Eigen::Vector3d> pointcloud_filtering(octomap::OcTree octree, std::vector<Eigen::Vector3d> &pointcloud);
 
-        
+        void save_pcd(std::vector<Eigen::Vector3d> &pointcloud);
 
         /// Manager parameters
         VioManagerOptions params;
 
         /// Our master state object :D
         State* state;
+        //IMU last_imu;
+        Eigen::Matrix<double,16,1> last_imu;
 
         /// Propagator of our state
         Propagator* propagator;
@@ -368,6 +380,9 @@ namespace ov_msckf {
 
         /// filtered point cloud data
         std::vector<Eigen::Vector3d> stored_pc;
+
+        std::vector<Eigen::Vector3d> localization_pc;
+        std::vector<Eigen::Vector3d> result_localization_pc;
     };
 
 

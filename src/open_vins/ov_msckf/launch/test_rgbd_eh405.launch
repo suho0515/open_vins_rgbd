@@ -1,19 +1,23 @@
 <launch>
 
+<node pkg="tf" type="static_transform_publisher" name="world_map_broadcaster" args="0 0 0 0 0 0 map global 10"/>
+
     <!-- mono or stereo and what ros bag to play -->
     <arg name="max_cameras" default="1" />
     <arg name="use_stereo"  default="false" />
     <arg name="bag_start"   default="0" />
-    <arg name="bag"         default="/home/eh420/datasets/vins_rgbd/handheld_Normal.bag" />
+    <arg name="bag"         default="/home/eh420/datasets/lab/20201104_eh405_merging_04.bag" />
+    <!--arg name="bag"         default="/home/eh420/datasets/vins_rgbd/handheld_Normal.bag" /-->
+    <!--arg name="bag"         default="/home/eh420/datasets/vins_rgbd/Simple.bag" /-->
 
     <!-- imu starting thresholds -->
     <arg name="init_window_time"  default="1.0" />
-    <arg name="init_imu_thresh"   default="0.1" />
+    <arg name="init_imu_thresh"   default="0.30" />
 
     <!-- saving trajectory path and timing information -->
     <arg name="dosave"      default="false" />
     <arg name="dotime"      default="false" />
-    <arg name="path_est"    default="~/output/pose_graph.txt" />
+    <arg name="path_est"    default="/tmp/traj_estimate.txt" />
     <arg name="path_time"   default="/tmp/traj_timing.txt" />
 
 
@@ -23,7 +27,8 @@
         <!-- bag topics -->
         <param name="topic_imu"      type="string" value="/camera/imu" />
         <param name="topic_camera0"  type="string" value="/camera/color/image_raw" />
-        <param name="topic_depth_camera"  type="string" value="/camera/depth/image_rect_raw" />
+        <!--param name="topic_depth_camera"  type="string" value="/camera/aligned_depth_to_color/image_raw" /-->
+	<param name="topic_depth_camera"  type="string" value="/camera/depth/image_rect_raw" />
 
         <!-- world/filter parameters -->
         <param name="use_fej"                type="bool"   value="true" />
@@ -39,10 +44,10 @@
         <param name="max_slam_in_update"     type="int"    value="25" /> <!-- 25 seems to work well -->
         <param name="max_msckf_in_update"    type="int"    value="999" />
         <param name="max_cameras"            type="int"    value="$(arg max_cameras)" />
-        <param name="dt_slam_delay"          type="double" value="5" />
+        <param name="dt_slam_delay"          type="double" value="1.0" />
         <param name="init_window_time"       type="double" value="$(arg init_window_time)" />
         <param name="init_imu_thresh"        type="double" value="$(arg init_imu_thresh)" />
-        <rosparam param="gravity">[0.0, 0.0, 9.805]</rosparam>
+        <rosparam param="gravity">[0.0, 0.0, 9.805]</rosparam><!--[0.0, 0.0, 9.805]-->
         <param name="feat_rep_msckf"         type="string" value="GLOBAL_3D" />
         <param name="feat_rep_slam"          type="string" value="ANCHORED_FULL_INVERSE_DEPTH" />
         <param name="feat_rep_aruco"         type="string" value="ANCHORED_FULL_INVERSE_DEPTH" />
@@ -95,21 +100,19 @@
         </rosparam>
 
 
+
+
     </node>
 
 
     <!-- play the dataset -->
-    <!--node pkg="rosbag" type="play" name="rosbag" args="-d 1 -s $(arg bag_start) $(arg bag)" required="true"/-->
-
-    <!--node pkg="tf"
-        type="static_transform_publisher"
-        name="world_to_global"
-        args="0 0 0 3.14 0 0 world global 100" /-->    
+    <node pkg="rosbag" type="play" name="rosbag" args="-u 200 -r 1 -d 1 -s $(arg bag_start) $(arg bag)" required="true"/>
 
     <node pkg="tf"
         type="static_transform_publisher"
         name="cam0_to_depth0"
         args="0.0 0.0 0.0 0.0 0.0 0.0 cam0 depth0 100" />    
+
 
 
 

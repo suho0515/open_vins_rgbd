@@ -39,6 +39,7 @@ message(STATUS "BOOST VERSION: " ${Boost_VERSION})
 # Describe catkin project
 if (catkin_FOUND)
     add_definitions(-DROS_AVAILABLE=1)
+    add_definitions( ${PCL_DEFINITIONS} )
     catkin_package(
             CATKIN_DEPENDS 
             roscpp 
@@ -90,7 +91,7 @@ include_directories(
         ${Boost_INCLUDE_DIRS}
         ${catkin_INCLUDE_DIRS}
         ${OCTOMAP_INCLUDE_DIRS}
-
+        ${PCL_INCLUDE_DIRS}
 )
 
 # link directory
@@ -102,7 +103,7 @@ list(APPEND thirdparty_libraries
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES}
         ${OCTOMAP_LIBRARIES}
-
+        ${PCL_LIBRARY_DIRS}
 )
 
 # If we are not building with ROS then we need to manually link to its headers
@@ -135,7 +136,7 @@ if (catkin_FOUND)
     )
 endif()
 add_library(ov_msckf_lib SHARED ${library_source_files})
-target_link_libraries(ov_msckf_lib ${thirdparty_libraries})
+target_link_libraries(ov_msckf_lib ${thirdparty_libraries} )
 target_include_directories(ov_msckf_lib PUBLIC src)
 
 

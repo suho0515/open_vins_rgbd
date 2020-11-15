@@ -116,6 +116,9 @@ namespace ov_msckf {
         /// Publish result point cloud from depth
         void publish_result_pointcloud();
 
+        void publish_localization_pointcloud();
+        void publish_result_localization_pointcloud();
+
         /// Publish current features
         void publish_features();
 
@@ -154,6 +157,8 @@ namespace ov_msckf {
         ros::Publisher pub_aligned_pointcloud;
         ros::Publisher pub_filtered_pointcloud;
         ros::Publisher pub_result_pointcloud;
+        ros::Publisher pub_localization_pointcloud;
+        ros::Publisher pub_result_localization_pointcloud;
         tf::TransformBroadcaster *mTfBr;
 
         // For path viz

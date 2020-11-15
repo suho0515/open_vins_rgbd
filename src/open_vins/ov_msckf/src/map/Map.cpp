@@ -173,7 +173,7 @@ std::vector<Eigen::Vector3d> Map::depth_to_pointcloud(cv::Mat &depth_img) {
             // if depth is too far, it could be very noisy.
             // too solve that issue, i limit depth to 5000
             if (d == 0) continue;
-            if (d > 4000) continue;
+            if (d > 2000) continue;
                      
             // Calculate the spatial coordinates of this point
             float z = double (d) / 1000; // 1000 is camera factor
@@ -181,8 +181,8 @@ std::vector<Eigen::Vector3d> Map::depth_to_pointcloud(cv::Mat &depth_img) {
             float y = (m - cy) * z / fy;
             //std::cout << "y : " << y << std::endl;
             // delete ceiling and floor
-            if(y < 0.0 || y > 1.0 ) continue;
-            if(x < -4.0 || x > 4.0 ) continue;
+            //if(y < 0.0 || y > 1.0 ) continue;
+            if(x < -2.0 || x > 2.0 ) continue;
 
             Eigen::Vector3d point(x,y,z);
 
@@ -194,7 +194,7 @@ std::vector<Eigen::Vector3d> Map::depth_to_pointcloud(cv::Mat &depth_img) {
 std::vector<Eigen::Vector3d> Map::pointcloud_filtering(std::vector<Eigen::Vector3d> &pointcloud, float octree_num)
 {
     
-    octomap::OcTree octree( 0.1 );
+    octomap::OcTree octree( 0.05 );
     for (auto p:pointcloud)
     {
         octree.updateNode( octomap::point3d(p[0], p[1], p[2]), true );
@@ -567,7 +567,7 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
     //elevate_minmax_initialize_flag = false;
 
 
-    min_z = min_z - 0.1; // to prevent min value would be 0.0
+    min_z = min_z - 0.05; // to prevent min value would be 0.0
     float dx = max_x - min_x;
     float dy = max_y - min_y;
     float dz = max_z - min_z; 
@@ -589,9 +589,13 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
     // std::cout << "  dy = " << dy << std::endl;
     // std::cout << "  dz = " << dz << std::endl;
 
-    int width = (int)((dx+0.1)*100.0);
+    // calculate width anf height of image.
+    // to prevent edge issue, we add to residual number to dx
+    // if resolution is 0.1, add 0.1 to dx. and multiply 100.0 to dx to make it intager.
+    // if resolution is 0.05, add 0.05 to dx. and multiply 1000.0 to dx to make it integer.
+    int width = (int)((dx+0.05)*1000.0);
     width = width - (width/10)*9;
-    int height = (int)((dy+0.1)*100.0);
+    int height = (int)((dy+0.05)*1000.0);
     height = height - (height/10)*9;
 
     //std::cout << "  width = " << width << std::endl;
@@ -602,10 +606,12 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
     //     return elevated_pointcloud;
     // }
 
-    
-    float normalized_min_x = ((min_x+0.05)*10.0);
-    float normalized_min_y = ((min_y+0.05)*10.0);
-    float normalized_min_z = ((min_z+0.05)*10.0);
+    // if resolution is 0.05, point would be end with 0.025.
+    // 0.025+0.025 is 0.05, so if we want to make the 3d point value to image value,
+    // add 0.025 to min_x (=0.05), then multiply 100(=5), then divide with 5.0(=1).
+    float normalized_min_x = ((min_x+0.025)*100.0)/5.0;
+    float normalized_min_y = ((min_y+0.025)*100.0)/5.0;
+    float normalized_min_z = ((min_z+0.025)*100.0)/5.0;
 
     // to prevent there are double
     normalized_min_x = round(normalized_min_x);
@@ -621,11 +627,19 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
 
 
     for(const auto& p: pointcloud) {
+        if(name=="localization_frame") {
+            if(p[2] <= 0.275 || p[2] >= 0.375) continue;
+        }
+
+        // robot lidar height is 300mm, and we don't need higher than lidar height.
+        // that's why we limit p[2] data.
+        if(p[2] > 0.325) continue;
+
     //     if(isinf(min_x) || isinf(min_y) || isinf(min_z)) continue;
     //     if(p[0]==0.0 || p[1]==0.0 || p[0]==0.0) continue;
-        if(min_x == 0.0) min_x = 0.05;
-        if(min_y == 0.0) min_y = 0.05;
-        if(min_z == 0.0) min_z = 0.05;
+        if(min_x == 0.0) min_x = 0.025;
+        if(min_y == 0.0) min_y = 0.025;
+        if(min_z == 0.0) min_z = 0.025;
 
 
 
@@ -647,9 +661,9 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
         // std::cout << "  normalized_min_y = " << normalized_min_y << std::endl;
         // std::cout << "  normalized_min_z = " << normalized_min_z << std::endl;
 
-        float x = ((p[0]+0.05)*10.0)-normalized_min_x;
-        float y = ((p[1]+0.05)*10.0)-normalized_min_y;
-        float z = ((p[2]+0.05)*10.0)-normalized_min_z;
+        float x = ((p[0]+0.025)*100.0)/5.0-normalized_min_x;
+        float y = ((p[1]+0.025)*100.0)/5.0-normalized_min_y;
+        float z = ((p[2]+0.025)*100.0)/5.0-normalized_min_z;
 
         float f_z = ((p[2]-min_z)/dz)*1.0;
 
@@ -700,7 +714,6 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
 
         elevation_mat = tmp_mat;
 
-
         for(int y=0; y<(int)height; y++) {
             for(int x=0; x<(int)width; x++) {
                 if(elevation_mat.at<float>((int)y,(int)x) != 0.0) {
@@ -721,7 +734,7 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
         //cv::imshow(erode_binary, erode_binary_mat);
         //cv::imwrite( "../03_erode_binary_image.bmp", binary_mat);
 
-        erode_elevation_mat = elevation_mat;
+        erode_elevation_mat = elevation_mat.clone();
         for(int y=0; y<(int)height; y++) {
             for(int x=0; x<(int)width; x++) {
                 if(erode_binary_mat.at<uchar>((int)y,(int)x) == 0) {
@@ -751,6 +764,35 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
 
 
         tmp_mat = median_elevation_mat;
+    }
+    else if(name=="localization_frame") {
+        elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+        binary_mat = cv::Mat::zeros((int)height,(int)width,CV_8U);
+        erode_binary_mat = cv::Mat::zeros((int)height,(int)width,CV_8U);
+        erode_elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+
+        elevation_mat = tmp_mat;
+
+        for(int y=0; y<(int)height; y++) {
+            for(int x=0; x<(int)width; x++) {
+                if(elevation_mat.at<float>((int)y,(int)x) != 0.0) {
+                    binary_mat.at<uchar>((int)y,(int)x) = 255;
+                }
+            }
+        }
+
+        cv::erode(binary_mat,erode_binary_mat,cv::Mat());
+
+        erode_elevation_mat = elevation_mat.clone();
+        for(int y=0; y<(int)height; y++) {
+            for(int x=0; x<(int)width; x++) {
+                if(erode_binary_mat.at<uchar>((int)y,(int)x) == 0) {
+                    erode_elevation_mat.at<float>((int)y,(int)x) = 0.0;
+                }
+            }
+        }
+
+        tmp_mat = erode_elevation_mat;
     }
     else if(name=="filtered_frame") {
 
@@ -785,8 +827,8 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
         // std::string erode = "erode "+name;
         // cv::imshow(erode, elevation_mat);
 
-        cv::imshow("tmp_mat", tmp_mat);
-        cv::waitKey(10);
+        //cv::imshow("tmp_mat", tmp_mat);
+        //cv::waitKey(10);
 
 
 
@@ -827,7 +869,7 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
 
 
 
-    //cv::waitKey(10);
+    cv::waitKey(10);
     
     
 
@@ -837,16 +879,215 @@ std::vector<Eigen::Vector3d> Map::elevation(std::vector<Eigen::Vector3d> &pointc
         for(int x=0; x<(int)width;x++) {
             if(tmp_mat.at<float>(y,x)==0.0) continue;
                     
-            float pc_x = ((x+normalized_min_x)/10.0)-0.05;
-            float pc_y = ((y+normalized_min_y)/10.0)-0.05;
+            float pc_x = (((x+normalized_min_x)*5.0)/100.0)-0.025;
+            float pc_y = (((y+normalized_min_y)*5.0)/100.0)-0.025;
             float pc_z = ((tmp_mat.at<float>(y,x)/1.0)*dz)+min_z;
 
             // std::cout << "  pc_x = " << pc_x << std::endl;
             // std::cout << "  pc_y = " << pc_y << std::endl;
             // std::cout << "  pc_z = " << pc_z << std::endl;
+            //if(pc_z > 1.0) continue;
+            //if(pc_z < -0.5) continue;
+            //if(pc_z < -0.1) pc_z = -0.1;
+            Eigen::Vector3d point(pc_x,pc_y,pc_z);
+            elevated_pointcloud.push_back(point);
+        }
+    }
 
-            if(pc_z < -0.5) continue;
-            if(pc_z < -0.1) pc_z = -0.1;
+    tmp_mat.release();
+
+    return elevated_pointcloud;
+}
+
+std::vector<Eigen::Vector3d> Map::localization_elevation(std::vector<Eigen::Vector3d> &pointcloud,std::vector<Eigen::Vector3d> &pointcloud_ref, std::string name)
+{
+    std::vector<Eigen::Vector3d> elevated_pointcloud;
+
+    float max_x = pointcloud_ref.at(0)[0];
+    float max_y = pointcloud_ref.at(0)[1];
+    float max_z = pointcloud.at(0)[2];
+    float min_x = pointcloud_ref.at(0)[0];
+    float min_y = pointcloud_ref.at(0)[1];
+    float min_z = pointcloud.at(0)[2];
+    for(const auto& point: pointcloud_ref) {
+        if(max_x < point[0]) max_x = point[0];
+        else if(min_x > point[0]) min_x = point[0];
+
+        if(max_y < point[1]) max_y = point[1];
+        else if(min_y > point[1]) min_y = point[1];
+    }
+
+    for(const auto& point: pointcloud) {
+        if(max_z < point[2]) max_z = point[2];
+        else if(min_z > point[2]) min_z = point[2];
+    }
+
+    min_z = min_z - 0.05; // to prevent min value would be 0.0
+    float dx = max_x - min_x;
+    float dy = max_y - min_y;
+    float dz = max_z - min_z; 
+
+    // calculate width anf height of image.
+    // to prevent edge issue, we add to residual number to dx
+    // if resolution is 0.1, add 0.1 to dx. and multiply 100.0 to dx to make it intager.
+    // if resolution is 0.05, add 0.05 to dx. and multiply 1000.0 to dx to make it integer.
+    int width = (int)((dx+0.05)*1000.0);
+    width = width - (width/10)*9;
+    int height = (int)((dy+0.05)*1000.0);
+    height = height - (height/10)*9;
+
+    //std::cout << "  width = " << width << std::endl;
+    //std::cout << "  height = " << height << std::endl;
+
+    // if(width == 0 || height == 0) {
+    //     elevated_pointcloud.clear();
+    //     return elevated_pointcloud;
+    // }
+
+    // if resolution is 0.05, point would be end with 0.025.
+    // 0.025+0.025 is 0.05, so if we want to make the 3d point value to image value,
+    // add 0.025 to min_x (=0.05), then multiply 100(=5), then divide with 5.0(=1).
+    float normalized_min_x = ((min_x+0.025)*100.0)/5.0;
+    float normalized_min_y = ((min_y+0.025)*100.0)/5.0;
+    float normalized_min_z = ((min_z+0.025)*100.0)/5.0;
+
+    // to prevent there are double
+    normalized_min_x = round(normalized_min_x);
+    normalized_min_y = round(normalized_min_y);
+    normalized_min_z = round(normalized_min_z); 
+
+    cv::Mat tmp_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+
+
+
+
+    for(const auto& p: pointcloud) {
+        if(name=="localization_frame") {
+            if(p[2] <= 0.275 || p[2] >= 0.375) continue;
+        }
+
+        // robot lidar height is 300mm, and we don't need higher than lidar height.
+        // that's why we limit p[2] data.
+        if(p[2] > 0.325) continue;
+
+        if(min_x == 0.0) min_x = 0.025;
+        if(min_y == 0.0) min_y = 0.025;
+        if(min_z == 0.0) min_z = 0.025;
+
+        float x = ((p[0]+0.025)*100.0)/5.0-normalized_min_x;
+        float y = ((p[1]+0.025)*100.0)/5.0-normalized_min_y;
+        float z = ((p[2]+0.025)*100.0)/5.0-normalized_min_z;
+
+        float f_z = ((p[2]-min_z)/dz)*1.0;
+
+        // to prevent there are double
+        x = round(x);
+        y = round(y);
+        z = round(z); 
+
+        if(tmp_mat.at<float>((int)y,(int)x) < f_z) {
+            tmp_mat.at<float>((int)y,(int)x) = f_z;
+            
+        }
+    }
+
+    //cv::imshow(name, elevation_mat);
+    //cv::imwrite( "../01_elevation_image.bmp", elevation_mat);
+    //cv::imshow("binaty_mat", binary_mat);
+    
+    if(name=="each_frame") {
+        elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+        binary_mat = cv::Mat::zeros((int)height,(int)width,CV_8U);
+        erode_binary_mat = cv::Mat::zeros((int)height,(int)width,CV_8U);
+        erode_elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+        median_elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);       
+
+        elevation_mat = tmp_mat;
+
+        for(int y=0; y<(int)height; y++) {
+            for(int x=0; x<(int)width; x++) {
+                if(elevation_mat.at<float>((int)y,(int)x) != 0.0) {
+                    binary_mat.at<uchar>((int)y,(int)x) = 255;
+                }
+            }
+        }
+        //cv::imwrite( "../02_binary_image.bmp", binary_mat);
+        //cv::imshow("binary_mat", binary_mat);
+
+        // cv::erode(elevation_mat,elevation_mat,cv::Mat());
+        // std::string erode = "erode "+name;
+        // cv::imshow(erode, elevation_mat);
+
+        //cv::erode(binary_mat,binary_mat,cv::Mat());
+        cv::erode(binary_mat,erode_binary_mat,cv::Mat());
+        //std::string erode_binary = "erode binary "+name;
+        //cv::imshow(erode_binary, erode_binary_mat);
+        //cv::imwrite( "../03_erode_binary_image.bmp", binary_mat);
+
+        erode_elevation_mat = elevation_mat.clone();
+        for(int y=0; y<(int)height; y++) {
+            for(int x=0; x<(int)width; x++) {
+                if(erode_binary_mat.at<uchar>((int)y,(int)x) == 0) {
+                    erode_elevation_mat.at<float>((int)y,(int)x) = 0.0;
+                }
+            }
+        }
+        //cv::imwrite( "../04_erode_elevation_image.bmp", elevation_mat);
+        //std::string erode = "erode "+name;
+        //cv::imshow(erode, erode_elevation_mat);
+
+        //cv::medianBlur(erode_elevation_mat, median_elevation_mat, 3);
+        //std::string median = "median "+name;
+        //cv::imshow(median, elevation_mat);
+        //cv::imwrite( "../05_median_elevation_image.bmp", elevation_mat);
+
+        tmp_mat = erode_elevation_mat;
+    }
+    else if(name=="localization_frame") {
+        // elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+        // binary_mat = cv::Mat::zeros((int)height,(int)width,CV_8U);
+        // erode_binary_mat = cv::Mat::zeros((int)height,(int)width,CV_8U);
+        // erode_elevation_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+
+        // elevation_mat = tmp_mat;
+
+        // for(int y=0; y<(int)height; y++) {
+        //     for(int x=0; x<(int)width; x++) {
+        //         if(elevation_mat.at<float>((int)y,(int)x) != 0.0) {
+        //             binary_mat.at<uchar>((int)y,(int)x) = 255;
+        //         }
+        //     }
+        // }
+
+        // cv::erode(binary_mat,erode_binary_mat,cv::Mat());
+
+        // erode_elevation_mat = elevation_mat.clone();
+        // for(int y=0; y<(int)height; y++) {
+        //     for(int x=0; x<(int)width; x++) {
+        //         if(erode_binary_mat.at<uchar>((int)y,(int)x) == 0) {
+        //             erode_elevation_mat.at<float>((int)y,(int)x) = 0.0;
+        //         }
+        //     }
+        // }
+
+        // tmp_mat = erode_elevation_mat;
+    }
+    else if(name=="result_map") {
+        //std::string result = "result "+name;
+        //cv::imshow(result, elevation_mat);
+        //cv::imwrite( "../06_result_image.bmp", elevation_mat);
+        result_mat = cv::Mat::zeros((int)height,(int)width,CV_32F);
+        result_mat = tmp_mat;
+    }
+
+    for(int y=0; y<(int)height;y++) {
+        for(int x=0; x<(int)width;x++) {
+            if(tmp_mat.at<float>(y,x)==0.0) continue;
+                    
+            float pc_x = (((x+normalized_min_x)*5.0)/100.0)-0.025;
+            float pc_y = (((y+normalized_min_y)*5.0)/100.0)-0.025;
+            float pc_z = ((tmp_mat.at<float>(y,x)/1.0)*dz)+min_z;
+
             Eigen::Vector3d point(pc_x,pc_y,pc_z);
             elevated_pointcloud.push_back(point);
         }

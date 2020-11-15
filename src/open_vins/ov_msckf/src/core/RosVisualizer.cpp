@@ -68,6 +68,15 @@ RosVisualizer::RosVisualizer(ros::NodeHandle &nh, VioManager* app, Simulator *si
     pub_result_pointcloud = nh.advertise<sensor_msgs::PointCloud2>("/ov_msckf/result_pointcloud", 2);
     ROS_INFO("Publishing: %s", pub_result_pointcloud.getTopic().c_str());
 
+    pub_localization_pointcloud = nh.advertise<sensor_msgs::PointCloud2>("/ov_msckf/localization_pointcloud", 2);
+    ROS_INFO("Publishing: %s", pub_localization_pointcloud.getTopic().c_str());
+
+    pub_result_localization_pointcloud = nh.advertise<sensor_msgs::PointCloud2>("/ov_msckf/result_localization_pointcloud", 2);
+    ROS_INFO("Publishing: %s", pub_result_localization_pointcloud.getTopic().c_str());
+
+
+
+
     // Our tracking image
     pub_tracks = nh.advertise<sensor_msgs::Image>("/ov_msckf/trackhist", 2);
     ROS_INFO("Publishing: %s", pub_tracks.getTopic().c_str());
@@ -152,13 +161,13 @@ void RosVisualizer::visualize() {
     // publish_erode_binary_image();
     // publish_erode_elevation_image();
     // publish_median_elevation_image();
-    publish_result_image();
+    // publish_result_image();
         // Check if we have subscribers
-    if(_app->get_is_initialized_pc()) {
-        // Get our map instance
-        Map *map = _app->get_map();
-        map->clear_memory();
-    }
+    // if(_app->get_is_initialized_pc()) {
+    //     // Get our map instance
+    //     Map *map = _app->get_map();
+    //     map->clear_memory();
+    // }
 
 
 
@@ -168,13 +177,17 @@ void RosVisualizer::visualize() {
 
     publish_elevation_pointcloud();
 
-    publish_aligned_pointcloud();
+    // publish_aligned_pointcloud();
 
-    publish_filtered_pointcloud();
+    // publish_filtered_pointcloud();
 
     // 20200722, edited by suho 
     // publish result point cloud
     publish_result_pointcloud();
+
+    publish_localization_pointcloud();
+
+    publish_result_localization_pointcloud();
 
     // Return if we have not inited
     if(!_app->initialized())
@@ -814,6 +827,92 @@ void RosVisualizer::publish_result_pointcloud() {
 
     // Publish
     pub_result_pointcloud.publish(cloud);
+
+}
+
+void RosVisualizer::publish_localization_pointcloud() {
+
+    // Check if we have subscribers
+    if(pub_tracks.getNumSubscribers()==0 || poses_imu.size() < 1)
+        return;
+
+    std::vector<Eigen::Vector3d> pointcloud = _app->get_localization_pc();
+
+    // Declare message and sizes
+    sensor_msgs::PointCloud2 cloud;
+    cloud.header.frame_id = "global";
+    cloud.header.stamp = ros::Time::now();
+    cloud.width  = 3*pointcloud.size();
+    cloud.height = 1;
+    cloud.is_bigendian = false;
+    cloud.is_dense = false; // there may be invalid points
+
+    // Setup pointcloud fields
+    sensor_msgs::PointCloud2Modifier modifier(cloud);
+    modifier.setPointCloud2FieldsByString(1,"xyz");
+    modifier.resize(3*pointcloud.size());
+
+    // Iterators
+    sensor_msgs::PointCloud2Iterator<float> out_x(cloud, "x");
+    sensor_msgs::PointCloud2Iterator<float> out_y(cloud, "y");
+    sensor_msgs::PointCloud2Iterator<float> out_z(cloud, "z");
+
+    for (const auto &pt : pointcloud)
+    {
+
+        *out_x = pt(0);
+        ++out_x;
+        *out_y = pt(1);
+        ++out_y;
+        *out_z = pt(2);
+        ++out_z;
+    }
+
+    // Publish
+    pub_localization_pointcloud.publish(cloud);
+
+}
+
+void RosVisualizer::publish_result_localization_pointcloud() {
+
+    // Check if we have subscribers
+    if(pub_tracks.getNumSubscribers()==0 || poses_imu.size() < 1)
+        return;
+
+    std::vector<Eigen::Vector3d> pointcloud = _app->get_result_localization_pc();
+
+    // Declare message and sizes
+    sensor_msgs::PointCloud2 cloud;
+    cloud.header.frame_id = "global";
+    cloud.header.stamp = ros::Time::now();
+    cloud.width  = 3*pointcloud.size();
+    cloud.height = 1;
+    cloud.is_bigendian = false;
+    cloud.is_dense = false; // there may be invalid points
+
+    // Setup pointcloud fields
+    sensor_msgs::PointCloud2Modifier modifier(cloud);
+    modifier.setPointCloud2FieldsByString(1,"xyz");
+    modifier.resize(3*pointcloud.size());
+
+    // Iterators
+    sensor_msgs::PointCloud2Iterator<float> out_x(cloud, "x");
+    sensor_msgs::PointCloud2Iterator<float> out_y(cloud, "y");
+    sensor_msgs::PointCloud2Iterator<float> out_z(cloud, "z");
+
+    for (const auto &pt : pointcloud)
+    {
+
+        *out_x = pt(0);
+        ++out_x;
+        *out_y = pt(1);
+        ++out_y;
+        *out_z = pt(2);
+        ++out_z;
+    }
+
+    // Publish
+    pub_result_localization_pointcloud.publish(cloud);
 
 }
 

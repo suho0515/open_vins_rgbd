@@ -11,8 +11,21 @@ octomap
 it used VINS-RGBD handheld datasets.
 
 # how to run
-$ roslaunch ov_msckf test_rgbd.launch
-$ roslaunch octomap_server octomap_mapping.launch (loosely-coupled)
+## terminal_1
+$ roscore
+
+## terminal_2
+$ cd ~/catkin_ws_ov_rgbd
+$ catkin init
+$ source devel/setup.bash
+$ rviz
+
+## terminal_3
+$ cd ~/catkin_ws_ov_rgbd
+$ catkin init
+$ source devel/setup.bash
+$ roslaunch ov_msckf test_rgbd.launch (whatever you want to run with your datasets)
+
 
 
 

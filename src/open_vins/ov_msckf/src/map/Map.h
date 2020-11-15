@@ -141,6 +141,14 @@ namespace ov_msckf {
 
         /**
          * @brief later
+         */
+        std::vector<Eigen::Vector3d> get_localization_elevation(std::vector<Eigen::Vector3d> &pointcloud,std::vector<Eigen::Vector3d> &pointcloud_ref , std::string name) {
+            
+            return localization_elevation(pointcloud,pointcloud_ref, name);
+        }
+
+        /**
+         * @brief later
          * @param pointcloud filtered point cloud data
          */
         cv::Mat pointcloud_to_mat(std::vector<Eigen::Vector3d> &pointcloud, std::string name);
@@ -202,6 +210,7 @@ namespace ov_msckf {
          * @param pointcloud filtered point cloud data
          */
         std::vector<Eigen::Vector3d> elevation(std::vector<Eigen::Vector3d> &pointcloud, std::string name);
+        std::vector<Eigen::Vector3d> localization_elevation(std::vector<Eigen::Vector3d> &pointcloud,std::vector<Eigen::Vector3d> &pointcloud_ref, std::string name);
 
         
 
